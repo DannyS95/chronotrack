@@ -1,0 +1,26 @@
+FROM laravelsail/php83-composer
+
+# Node + Yarn + system utils
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get update && apt-get install -y \
+    nodejs \
+    unzip \
+    git \
+    vim \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    curl && \
+    npm install -g npm
+
+# Install Laravel dependencies
+WORKDIR /var/www
+COPY . .
+
+RUN composer install
+RUN npm install
+
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
