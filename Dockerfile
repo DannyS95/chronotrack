@@ -14,7 +14,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     curl && \
     npm install -g npm
 
-# Install Laravel dependencies
+# ✅ Install MySQL PDO driver
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Laravel setup
 WORKDIR /var/www
 COPY . .
 

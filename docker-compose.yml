@@ -15,10 +15,10 @@ services:
     depends_on:
       - mysql
     ports:
-      - "8000:8000"  # Laravel app exposed on localhost:8000
+      - "8000:8000"
     environment:
       - DB_HOST=mysql
-      - DB_PORT=3310
+      - DB_PORT=3306
       - DB_DATABASE=chronotrack
       - DB_USERNAME=root
       - DB_PASSWORD=root
@@ -36,6 +36,12 @@ services:
       - dbdata:/var/lib/mysql
     networks:
       - chronotrack
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   adminer:
     image: adminer
     container_name: chronotrack-adminer
@@ -47,6 +53,7 @@ services:
 
 networks:
   chronotrack:
+    driver: bridge
 
 volumes:
   dbdata:

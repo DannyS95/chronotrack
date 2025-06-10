@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Interface\Http\Requests\Timers;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreTimerRequest extends FormRequest
+class UpdateTimerRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

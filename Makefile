@@ -7,13 +7,13 @@ artisan:
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan $(cmd)
 
 migrate:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan migrate
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan migrate $(ARGS)
 
 seed:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan db:seed
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan db:seed $(ARGS)
 
 fresh:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan migrate:fresh --seed
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan migrate:fresh $(ARGS)
 
 tinker:
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan tinker
@@ -29,27 +29,27 @@ cache-clear:
 
 # === Composer ===
 composer-install:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer install
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer install $(ARGS)
 
 composer-update:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer update
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer update $(ARGS)
 
 composer-require:
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer require $(pkg)
 
 # === NPM / Frontend ===
 npm-install:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm install
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm install $(ARGS)
 
 npm-build:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm run build
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm run build $(ARGS)
 
 npm-dev:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm run dev
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm run dev $(ARGS)
 
 # === Pest / Testing ===
 test:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) ./vendor/bin/pest
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) ./vendor/bin/pest $(ARGS)
 
 # === Shell ===
 sh:
@@ -74,6 +74,19 @@ restart:
 
 logs:
 	$(DOCKER_COMPOSE) logs -f $(PHP_CONTAINER)
+
+install:
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer install
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm install
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan key:generate
+	sleep 10
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan migrate
+
+reset:
+	docker compose down -v --remove-orphans
+	docker compose up -d --build
+	sleep 10
+	make install
 
 .PHONY: artisan migrate seed fresh tinker key-generate cache-clear \
         composer-install composer-update composer-require \
