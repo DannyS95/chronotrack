@@ -58,11 +58,6 @@ sh:
 bash:
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) bash
 
-# === Project Setup ===
-install: composer-install npm-install key-generate migrate
-
-rebuild: down build up install
-
 up:
 	$(DOCKER_COMPOSE) up -d
 
@@ -75,18 +70,28 @@ restart:
 logs:
 	$(DOCKER_COMPOSE) logs -f $(PHP_CONTAINER)
 
-install:
+install: ensure-env
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer install
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) npm install
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan key:generate
 	sleep 10
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan migrate
+	make dev
+
+ensure-env:
+	@if [ ! -f .env ]; then \
+		echo "Creating .env from .env.example..."; \
+		cp .env.example .env; \
+	fi
 
 reset:
 	docker compose down -v --remove-orphans
 	docker compose up -d --build
 	sleep 10
 	make install
+
+dev:
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan serve --host=0.0.0.0 --port=8000
 
 .PHONY: artisan migrate seed fresh tinker key-generate cache-clear \
         composer-install composer-update composer-require \

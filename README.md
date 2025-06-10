@@ -128,13 +128,7 @@ Built to explore:
 ## 🔧 Setup
 
 ```bash
-git clone https://github.com/yourname/chronotrack.git
+git clone https://github.com/DannyS95/chronotrack.git
 cd chronotrack
-cp .env.example .env
-php artisan key:generate
-
-# Set up DB credentials in .env
-php artisan migrate
-
-npm install && npm run dev
-php artisan serve
+make up
+make install
