@@ -16,13 +16,7 @@ services:
       - mysql
     ports:
       - "8000:8000"
-    environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=chronotrack
-      - DB_USERNAME=root
-      - DB_PASSWORD=root
-
+      
   mysql:
     image: mysql:8.0
     container_name: chronotrack-mysql
@@ -54,6 +48,5 @@ services:
 networks:
   chronotrack:
     driver: bridge
-
 volumes:
   dbdata:

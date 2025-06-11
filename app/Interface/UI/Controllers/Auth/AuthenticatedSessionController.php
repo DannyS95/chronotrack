@@ -3,7 +3,7 @@
 namespace App\Interface\UI\Controllers\Auth;
 
 use App\Interface\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
+use App\Interface\UI\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
