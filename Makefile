@@ -21,11 +21,12 @@ tinker:
 key-generate:
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan key:generate
 
-cache-clear:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan config:clear && \
-	php artisan cache:clear && \
-	php artisan route:clear && \
-	php artisan view:clear
+clear-cache:
+	@$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan config:clear
+	@$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan route:clear
+	@$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan view:clear
+	@$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) php artisan cache:clear
+	@$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) composer dump-autoload
 
 # === Composer ===
 composer-install:

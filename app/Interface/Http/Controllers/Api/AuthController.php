@@ -2,13 +2,13 @@
 
 namespace App\Interface\Http\Controllers\Api;
 
-use App\Domain\Users\Models\User;
+use App\Infrastructure\Persistence\Eloquent\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Interface\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
-    class AuthController extends Controller
+class AuthController extends Controller
 {
     public function login(Request $request)
     {
