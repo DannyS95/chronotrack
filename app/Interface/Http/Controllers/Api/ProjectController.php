@@ -7,7 +7,7 @@ use App\Interface\Http\Controllers\Controller;
 use App\Application\Projects\Services\CreateProjectService;
 use App\Interface\Http\Requests\Projects\StoreProjectRequest;
 
-final class ProjectController extends Controller
+class ProjectController extends Controller
 {
     public function store(StoreProjectRequest $request): JsonResponse
     {

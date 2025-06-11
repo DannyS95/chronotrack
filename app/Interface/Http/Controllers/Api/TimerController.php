@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Interface\Http\Requests\Api;
+namespace App\Interface\Http\Controllers\Api;
 
+use App\Interface\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Interface\Http\Requests\Controller;
 
-final class TimerController extends Controller
+class TimerController extends Controller
 {
     //
 }
