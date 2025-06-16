@@ -15,7 +15,8 @@ final class Project extends Model
         'name',
         'description',
         'deadline',
-        // Add any other columns you plan to fill via create() or update()
+        'user_id',
+        'id',
     ];
 
     protected $keyType = 'string';

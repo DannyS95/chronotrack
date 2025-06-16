@@ -11,7 +11,7 @@ final class CreateProjectService
 
     public function handle(CreateProjectDTO $createProjectDto)
     {
-        return $this->repository->create((array) $createProjectDto);
+        return $this->repository->create( $createProjectDto->toArray());
     }
 }
 

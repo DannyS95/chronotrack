@@ -2,8 +2,8 @@
 
 namespace App\Domain\Projects\Policies\Policies;
 
-use App\Domain\Projects\Models\Project;
-use App\Domain\Users\Models\User;
+use App\Infrastructure\Persistence\Eloquent\Models\User;
+use App\Infrastructure\Projects\Eloquent\Models\Project;
 use Illuminate\Auth\Access\Response;
 
 class ProjectPolicy

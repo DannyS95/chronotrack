@@ -132,3 +132,4 @@ git clone https://github.com/DannyS95/chronotrack.git
 cd chronotrack
 make up
 make install
+make dev
