@@ -83,7 +83,7 @@ Each layer is responsible for a specific concern, promoting separation of concer
 
 ### 🗂️ Projects
 - [x] Create project
-- [ ] View all projects
+- [x] View all projects
 - [ ] Archive/delete project
 
 ### ✅ Tasks

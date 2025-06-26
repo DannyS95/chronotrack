@@ -12,13 +12,11 @@ readonly class CreateProjectDTO
         public ?string $description,
         public string $deadline,
         public int|string $userId,
-        public int | string | null $id, // moved to the end and made optional
     ) {}
 
     public function toArray(): array
 {
     return [
-        'id' => $this->id ?? Str::uuid(),
         'name' => $this->name,
         'description' => $this->description,
         'deadline' => $this->deadline,
@@ -30,7 +28,6 @@ readonly class CreateProjectDTO
     public static function fromModel(Project $project): self
     {
         return new self(
-            id: $project?->id,
             name: $project->name,
             description: $project->description,
             deadline: $project->deadline,
