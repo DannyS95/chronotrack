@@ -29,30 +29,18 @@ abstract class BaseModel extends Model
         });
     }
 
-   public static function applyFilters(array $filters): Builder
+    public static function applyFilters(array $filters): Builder
     {
         $query = static::query();
         $map = static::filterMap();
 
+        // Apply sorting first
+        if (isset($filters['sort_by'])) {
+            $query->orderBy($filters['sort_by'], $filters['order'] ?? 'asc');
+        }
+
         foreach ($map as $param => $rule) {
-            $required = false;
-
-            if (str_starts_with($rule, 'required.')) {
-                $required = true;
-                $rule = substr($rule, 9);
-            }
-
-            if (str_starts_with($rule, 'optional.')) {
-                $rule = substr($rule, 9);
-            }
-
-            $hasValue = array_key_exists($param, $filters) && !is_null($filters[$param]);
-
-            if (!$hasValue && $required) {
-                throw new \InvalidArgumentException("Missing required filter: {$param}");
-            }
-
-            if (!$hasValue) {
+            if (!array_key_exists($param, $filters) || is_null($filters[$param])) {
                 continue;
             }
 
@@ -60,10 +48,21 @@ abstract class BaseModel extends Model
 
             if ($rule === 'equals') {
                 $query->where($param, '=', $value);
-            } elseif (str_contains($rule, '.')) {
+                continue;
+            }
+
+            if ($rule === 'like') {
+                $query->where($param, 'LIKE', '%' . $value . '%');
+                continue;
+            }
+
+            if (str_contains($rule, '.')) {
                 [$operator, $column] = explode('.', $rule);
                 $query->where($column, static::resolveOperator($operator), $value);
+                continue;
             }
+
+            throw new \InvalidArgumentException("Unknown filter rule: {$rule}");
         }
 
         return $query;

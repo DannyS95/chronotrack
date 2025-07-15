@@ -54,7 +54,7 @@ final class Project extends BaseModel
             'deadlineTo'    => 'before.deadline',
             'from'          => 'after.created_at',
             'to'            => 'before.created_at',
-            'project_id' => 'equals',
+            'project_id'    => 'equals',
         ];
     }
 }
