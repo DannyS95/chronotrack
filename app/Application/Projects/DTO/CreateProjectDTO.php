@@ -3,7 +3,6 @@
 namespace App\Application\Projects\DTO;
 
 use App\Infrastructure\Projects\Eloquent\Models\Project;
-use Illuminate\Support\Str;
 
 readonly class CreateProjectDTO
 {
@@ -15,15 +14,14 @@ readonly class CreateProjectDTO
     ) {}
 
     public function toArray(): array
-{
-    return [
-        'name' => $this->name,
-        'description' => $this->description,
-        'deadline' => $this->deadline,
-        'user_id' => $this->userId,
-    ];
-}
-
+    {
+        return [
+            'name' => $this->name,
+            'description' => $this->description,
+            'deadline' => $this->deadline,
+            'user_id' => $this->userId,
+        ];
+    }
 
     public static function fromModel(Project $project): self
     {

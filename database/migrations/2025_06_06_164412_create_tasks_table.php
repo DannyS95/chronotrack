@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->timestamp('due_at')->nullable();
+            $table->timestamp('last_activity_at')->nullable()->after('due_at');
             $table->timestamps();
             $table->softDeletes();
 

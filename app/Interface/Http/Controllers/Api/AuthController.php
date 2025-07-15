@@ -2,7 +2,7 @@
 
 namespace App\Interface\Http\Controllers\Api;
 
-use App\Infrastructure\Persistence\Eloquent\Models\User;
+use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Interface\Http\Controllers\Controller;

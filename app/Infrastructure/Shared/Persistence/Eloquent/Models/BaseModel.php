@@ -69,7 +69,6 @@ abstract class BaseModel extends Model
         return $query;
     }
 
-
     private static function resolveOperator(string $operator): string
     {
         return match ($operator) {

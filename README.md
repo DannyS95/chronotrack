@@ -31,30 +31,36 @@ Each layer is responsible for a specific concern, promoting separation of concer
 ## ✅ Core Features (Planned & In Progress)
 
 ### 🗂️ Projects
-- [x] Create project
-- [ ] View all projects
-- [ ] Archive/delete project
+- [x] Create project  
+- [ ] View all projects  
+- [ ] Archive/delete project  
 
 ### ✅ Tasks
-- [x] Create task (linked to project)
-- [ ] View tasks per project
-- [ ] Edit/delete task
-- [ ] Task status (To Do, In Progress, Done)
+- [x] Create task (linked to project)  
+- [ ] View tasks per project  
+- [ ] Edit/delete task  
+- [ ] Task status (To Do, In Progress, Done)  
 
 ### ⏱️ Timers
-- [x] Start timer on task
-- [x] Stop timer
-- [ ] Prevent multiple timers per user
-- [ ] View time logs per task
+- [x] Start timer on task  
+- [x] Stop timer  
+- [ ] Prevent multiple timers per user  
+- [ ] View time logs per task  
+
+### 🎯 Goals
+- [ ] Create goal (e.g., "Master symbolic manipulation")  
+- [ ] Attach goal to project  
+- [ ] Mark goal as achieved  
+- [ ] View goals progress per project  
 
 ### 📊 Reports
-- [ ] View time spent per project
-- [ ] View time per day/week/month
-- [ ] Export CSV or JSON summary
+- [ ] View time spent per project  
+- [ ] View time per day/week/month  
+- [ ] Export CSV or JSON summary  
 
 ### 👤 User System
-- [ ] Authentication
-- [ ] View own tasks and timers only
+- [ ] Authentication  
+- [ ] View own tasks and timers only  
 
 ---
 
