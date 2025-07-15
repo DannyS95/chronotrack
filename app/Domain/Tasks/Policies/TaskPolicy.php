@@ -2,9 +2,8 @@
 
 namespace App\Domain\Tasks\Policies;
 
-use App\Domain\Task\Models\Task;
-use App\Domain\Users\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
+use App\Infrastructure\Tasks\Eloquent\Models\Task;
 
 class TaskPolicy
 {

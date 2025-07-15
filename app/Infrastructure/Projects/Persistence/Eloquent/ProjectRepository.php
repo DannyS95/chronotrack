@@ -8,7 +8,7 @@ use App\Domain\Projects\Contracts\ProjectRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-class ProjectRepository implements ProjectRepositoryInterface
+final class ProjectRepository implements ProjectRepositoryInterface
 {
     public function create(array $data): Project
     {
@@ -23,7 +23,8 @@ class ProjectRepository implements ProjectRepositoryInterface
     {
         return Project::with('users')->find($id);
     }
-    public function getAllByUserId(string $id): Collection
+
+    public function getAllByuser_id(string $id): Collection
     {
         return Project::where('user_id', $id)->latest()->get();
     }

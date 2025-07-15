@@ -13,15 +13,15 @@ use App\Interface\Http\Requests\Tasks\TaskFilterRequest;
 
 class TaskController extends Controller
 {
-    public function store(StoreTaskRequest $request, string $projectId): JsonResponse
+    public function store(StoreTaskRequest $request, string $project_id): JsonResponse
     {
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
         $dto = new CreateTaskDTO(...[
             ...$request->validated(),
-            'projectId' => $projectId,
-            'userId' => $auth->id(),
+            'project_id' => $project_id,
+            'user_id' => $auth->id(),
         ]);
 
         $task = app(CreateTaskService::class)->handle($dto);
@@ -32,15 +32,15 @@ class TaskController extends Controller
         ], 201);
     }
 
-    public function index(TaskFilterRequest $request, string $projectId): JsonResponse
+    public function index(TaskFilterRequest $request, string $project_id): JsonResponse
     {
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
         $dto = new TaskFilterDTO(...[
             ...$request->validated(),
-            'projectId' => $projectId,
-            'userId' => $auth->id(),
+            'project_id' => $project_id,
+            'user_id' => $auth->id(),
         ]);
 
         $tasks = app(ListTasksService::class)->handle($dto);

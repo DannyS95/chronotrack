@@ -10,7 +10,7 @@ readonly class CreateProjectDTO
         public string $name,
         public ?string $description,
         public string $deadline,
-        public int|string $userId,
+        public int|string $user_id,
     ) {}
 
     public function toArray(): array
@@ -19,7 +19,7 @@ readonly class CreateProjectDTO
             'name' => $this->name,
             'description' => $this->description,
             'deadline' => $this->deadline,
-            'user_id' => $this->userId,
+            'user_id' => $this->user_id,
         ];
     }
 
@@ -29,7 +29,7 @@ readonly class CreateProjectDTO
             name: $project->name,
             description: $project->description,
             deadline: $project->deadline,
-            userId: $project->user_id
+            user_id: $project->user_id
         );
     }
 }

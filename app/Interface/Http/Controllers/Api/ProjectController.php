@@ -20,7 +20,7 @@ class ProjectController extends Controller
 
          $dto = new CreateProjectDTO(...[
             ...$request->validated(),
-            'userId' => $auth->id(),
+            'user_id' => $auth->id(),
         ]);
 
         $project = app(CreateProjectService::class)->handle($dto);
@@ -38,7 +38,7 @@ class ProjectController extends Controller
 
         $dto = new ProjectFilterDTO(...[
             ...$request->validated(),
-            'userId' => $auth->id(),
+            'user_id' => $auth->id(),
         ]);
 
         $projects = app(ListProjectsService::class)->handle($dto);

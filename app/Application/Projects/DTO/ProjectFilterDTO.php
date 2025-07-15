@@ -16,6 +16,6 @@ readonly class ProjectFilterDTO
         public ?string $sortBy = 'created_at',
         public ?string $sortDirection = 'desc',
         public int $perPage = 10,
-        public int|string $userId = 0,
+        public int|string $user_id = 0,
     ) {}
 }

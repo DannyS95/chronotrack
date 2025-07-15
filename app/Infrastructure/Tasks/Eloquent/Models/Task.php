@@ -44,4 +44,18 @@ final class Task extends BaseModel
             'project_id'
         );
     }
+
+    public static function filterMap(): array
+    {
+        return [
+            'id' => 'equals',
+            'project_id' => 'equals',
+            'title' => 'like',
+            'description' => 'like',
+            'due_at' => 'equals',
+            'last_activity_at' => 'equals',
+            'from' => 'after.due_at',
+            'to' => 'before.due_at',
+        ];
+    }
 }

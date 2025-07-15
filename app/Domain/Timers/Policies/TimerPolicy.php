@@ -3,8 +3,7 @@
 namespace App\Domain\Timers\Policies;
 
 use App\Domain\Timers\Models\Timer;
-use App\Domain\Users\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
 
 class TimerPolicy
 {

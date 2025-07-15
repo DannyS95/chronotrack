@@ -9,6 +9,7 @@ use App\Interface\Http\Controllers\Api\TimerController;
 Route::middleware(['auth:sanctum', 'throttle:10,1'])->prefix('projects')->group(function () {
     Route::post('/', [ProjectController::class, 'store']);
     Route::post('{project}/tasks', [TaskController::class, 'store']);
+    Route::get('{project}/tasks', [TaskController::class, 'index']);
     Route::get('/', [ProjectController::class, 'index']);
 });
 
