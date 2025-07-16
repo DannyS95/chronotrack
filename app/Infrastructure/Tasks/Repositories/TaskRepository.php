@@ -5,7 +5,9 @@ namespace App\Infrastructure\Tasks\Repositories;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Application\Tasks\DTO\CreateTaskDTO;
 use App\Application\Tasks\DTO\TaskFilterDTO;
+use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 
 final class TaskRepository implements TaskRepositoryInterface
 {
@@ -19,7 +21,7 @@ final class TaskRepository implements TaskRepositoryInterface
         ]);
     }
 
-    public function getFiltered(TaskFilterDTO $dto): mixed
+    public function getFiltered(TaskFilterDTO $dto): Builder
     {
         $filters = [
             'project_id' => $dto->project_id,
@@ -30,10 +32,11 @@ final class TaskRepository implements TaskRepositoryInterface
             'order' => $dto->order,
         ];
 
-        return Task::applyFilters($filters)
-            ->whereHas('project', function ($query) use ($dto) {
-                $query->where('user_id', $dto->user_id);
-            })
-            ->get();
+        return Project::query()
+            ->where('id', $dto->project_id)
+            ->where('user_id', $dto->user_id)
+            ->firstOrFail()
+            ->tasks()
+            ->tap(fn ($query) => Task::applyFilters($filters)->mergeConstraintsFrom($query));
     }
 }

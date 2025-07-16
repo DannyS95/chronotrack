@@ -24,7 +24,7 @@ final class ProjectRepository implements ProjectRepositoryInterface
         return Project::with('users')->find($id);
     }
 
-    public function getAllByuser_id(string $id): Collection
+    public function getAllByUserId(string $id): Collection
     {
         return Project::where('user_id', $id)->latest()->get();
     }

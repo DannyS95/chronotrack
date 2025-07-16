@@ -8,19 +8,20 @@ use App\Application\Tasks\DTO\CreateTaskDTO;
 use App\Application\Tasks\DTO\TaskFilterDTO;
 use App\Application\Tasks\Services\CreateTaskService;
 use App\Application\Tasks\Services\ListTasksService;
+use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Interface\Http\Requests\Tasks\StoreTaskRequest;
 use App\Interface\Http\Requests\Tasks\TaskFilterRequest;
 
 class TaskController extends Controller
 {
-    public function store(StoreTaskRequest $request, string $project_id): JsonResponse
+    public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
         $dto = new CreateTaskDTO(...[
             ...$request->validated(),
-            'project_id' => $project_id,
+            'project_id' => $project->id,
             'user_id' => $auth->id(),
         ]);
 

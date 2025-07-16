@@ -4,6 +4,7 @@ namespace App\Infrastructure\Projects\Eloquent\Models;
 
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
+use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
@@ -43,6 +44,11 @@ final class Project extends BaseModel
             'project_id',
             'user_id'
         );
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
     }
 
     public static function filterMap(): array

@@ -13,6 +13,6 @@ final class ListTasksService
 
     public function handle(TaskFilterDTO $dto): mixed
     {
-        return $this->taskRepository->getFiltered($dto);
+        return $this->taskRepository->getFiltered($dto)->paginate($dto->per_page);
     }
 }
