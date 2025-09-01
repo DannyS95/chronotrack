@@ -14,16 +14,23 @@ return new class extends Migration
         Schema::create('tasks', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('project_id');
+
             $table->string('title');
             $table->text('description')->nullable();
+
             $table->timestamp('due_at')->nullable();
-            $table->timestamp('last_activity_at')->nullable()->after('due_at');
+            $table->timestamp('last_activity_at')->nullable(); // ← put it right after due_at, no ->after()
+
+            $table->tinyInteger('priority')->default(3);
+            $table->json('blocked_by')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
             $table->index('project_id');
         });
+
 
     }
 

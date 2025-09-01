@@ -14,9 +14,12 @@ Route::middleware(['auth:sanctum', 'throttle:10,1'])->prefix('projects')->group(
 });
 
 
-Route::prefix('tasks')->group(function () {
-    Route::post('{task}/timers/start', [TimerController::class, 'start']);
-    Route::post('{task}/timers/stop', [TimerController::class, 'stop']);
+Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
+    Route::post('{task}/timers/start', [TimerController::class, 'start'])
+        ->name('api.tasks.timers.start');
+
+    Route::post('{task}/timers/stop', [TimerController::class, 'stop'])
+        ->name('api.tasks.timers.stop');
 });
 
 Route::post('/login', [AuthController::class, 'login']);
