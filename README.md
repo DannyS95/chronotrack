@@ -139,3 +139,26 @@ cd chronotrack
 make up
 make install
 make dev
+```
+## ⚠️ Warning: Running with `artisan serve` inside Docker
+
+This project runs the Laravel application using the built-in PHP development server via make install or make dev:
+
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+Because of this, networking can sometimes conflict with Docker Desktop (especially on Windows/WSL2 or macOS).
+
+If you see errors like “connection reset by peer” or cannot reach the app on http://localhost:8000, it may be due to Docker Desktop interfering with port forwarding.
+
+In some cases, turning Docker Desktop off (or stopping other services on port 8000) resolves the issue.
+
+Oddly, there are scenarios where running Docker Desktop with the project makes things work again — so behavior may differ depending on your local setup.
+
+👉 If you encounter connectivity problems:
+
+Stop containers with docker compose down.
+
+Restart without Docker Desktop running, and re-try php artisan serve.
+
+Or switch the exposed port in docker-compose.yml (e.g. 8080:8000) and use http://localhost:8080.
