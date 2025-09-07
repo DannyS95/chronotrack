@@ -2,39 +2,35 @@
 
 namespace App\Infrastructure\Timers\Eloquent\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-
-class Timer extends Model
+class Timer extends BaseModel
 {
-    use SoftDeletes, HasUuids;
-
     protected $table = 'timers';
 
-    protected $keyType = 'string'; // important for uuid primary keys
-    public $incrementing = false;  // disable auto-increment
-
     protected $fillable = [
-        'id',
+        'user_id',
         'task_id',
         'started_at',
+        'paused_at',
+        'paused_total',
         'stopped_at',
         'duration',
     ];
 
-    protected $casts = [
-        'started_at' => 'datetime',
-        'stopped_at' => 'datetime',
-    ];
-
-    public function task(): BelongsTo
+    /**
+     * Filters that can be applied through applyFilters()
+     */
+    public static function filterMap(): array
     {
-        return $this->belongsTo(
-            \App\Infrastructure\Tasks\Eloquent\Models\Task::class,
-            'task_id'
-        );
+        return [
+            'id'            => 'equals',
+            'task_id'       => 'equals',
+            'started_after' => 'after.started_at',
+            'started_before'=> 'before.started_at',
+            'stopped_after' => 'after.stopped_at',
+            'stopped_before'=> 'before.stopped_at',
+            'active' => 'isnull.stopped_at',
+        ];
     }
 }

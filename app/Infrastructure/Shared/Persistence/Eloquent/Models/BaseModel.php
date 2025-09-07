@@ -58,9 +58,20 @@ abstract class BaseModel extends Model
 
             if (str_contains($rule, '.')) {
                 [$operator, $column] = explode('.', $rule);
+
+                if ($operator === 'isnull') {
+                    if ($value) {
+                        $query->whereNull($column);
+                    } else {
+                        $query->whereNotNull($column);
+                    }
+                    continue;
+                }
+
                 $query->where($column, static::resolveOperator($operator), $value);
                 continue;
             }
+
 
             throw new \InvalidArgumentException("Unknown filter rule: {$rule}");
         }

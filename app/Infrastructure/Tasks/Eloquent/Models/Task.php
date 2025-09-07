@@ -49,13 +49,12 @@ final class Task extends BaseModel
     {
         return [
             'id' => 'equals',
-            'project_id' => 'equals',
-            'title' => 'like',
-            'description' => 'like',
-            'due_at' => 'equals',
-            'last_activity_at' => 'equals',
-            'from' => 'after.due_at',
-            'to' => 'before.due_at',
+            'task_id' => 'equals',
+            'user_id' => 'equals',
+            'started_at' => 'after.started_at',
+            'started_to' => 'before.started_at',
+            'stopped_from' => 'after.stopped_at',
+            'stopped_to' => 'before.stopped_at',
         ];
     }
 }

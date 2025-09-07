@@ -2,10 +2,10 @@
 
 namespace App\Domain\Timers\Policies;
 
-use App\Domain\Timers\Models\Timer;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
+use App\Infrastructure\Timers\Eloquent\Models\Timer;
 
-class TimerPolicy
+final class TimerPolicy
 {
     /**
      * Determine whether the user can view any models.

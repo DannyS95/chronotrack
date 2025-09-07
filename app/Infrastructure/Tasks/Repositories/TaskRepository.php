@@ -37,14 +37,15 @@ final class TaskRepository implements TaskRepositoryInterface
             ->where('user_id', $dto->user_id)
             ->firstOrFail()
             ->tasks()
-            ->tap(fn ($query) => Task::applyFilters($filters)->mergeConstraintsFrom($query));
+            ->tap(fn($query) => Task::applyFilters($filters)
+            ->mergeConstraintsFrom($query->getModel()->newEloquentBuilder($query->getQuery())));
     }
 
     public function userOwnsTask(string $taskId, int $userId): bool
     {
         return Task::query()
             ->where('id', $taskId)
-            ->whereHas('project', fn ($q) => $q->where('user_id', $userId))
+            ->whereHas('project', fn($q) => $q->where('user_id', $userId))
             ->exists();
     }
 }

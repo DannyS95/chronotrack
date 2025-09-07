@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Interface\Http\Controllers\Api\TaskController;
 use App\Interface\Http\Controllers\Api\TimerController;
 
-Route::middleware(['auth:sanctum', 'throttle:10,1'])->prefix('projects')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:20,1'])->prefix('projects')->group(function () {
     Route::post('/', [ProjectController::class, 'store']);
     Route::post('{project}/tasks', [TaskController::class, 'store']);
     Route::get('{project}/tasks', [TaskController::class, 'index']);
@@ -20,6 +20,9 @@ Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
 
     Route::post('{task}/timers/stop', [TimerController::class, 'stop'])
         ->name('api.tasks.timers.stop');
+
+    Route::get('{task}/timers', [TimerController::class, 'index'])
+        ->name('api.tasks.timers.index');
 });
 
 Route::post('/login', [AuthController::class, 'login']);

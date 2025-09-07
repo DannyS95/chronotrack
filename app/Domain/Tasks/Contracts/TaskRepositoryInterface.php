@@ -11,4 +11,6 @@ interface TaskRepositoryInterface
     public function create(CreateTaskDTO $dto): mixed;
 
     public function getFiltered(TaskFilterDTO $dto): Builder;
+
+    public function userOwnsTask(string $taskId, int $userId): bool;
 }
