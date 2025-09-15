@@ -13,21 +13,14 @@ return new class extends Migration
     {
         Schema::create('goals', function (Blueprint $table) {
             $table->uuid('id')->primary();
-
             $table->string('title');
             $table->text('description')->nullable();
-
-            // measurement
-            $table->enum('metric_type', ['count', 'hours', 'boolean'])->default('count');
-            $table->decimal('target_value', 12, 2)->nullable();
-
-            // lifecycle
-            $table->timestamp('deadline')->nullable(); // high-level goal deadline
+            $table->timestamp('deadline')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->enum('status', ['active', 'dormant', 'dropped', 'complete'])->default('active');
-
             $table->timestamps();
             $table->softDeletes();
+
         });
 
     }
