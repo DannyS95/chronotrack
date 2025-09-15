@@ -18,7 +18,10 @@ return new class extends Migration
             $table->timestamp('deadline')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->enum('status', ['active', 'dormant', 'dropped', 'complete'])->default('active');
-            $table->timestamps();
+            $table->uuid('project_id');
+            $table->foreign('project_id')->references('id')->on('projects')->cascadeOnDelete();
+
+            $table->timestamps();   
             $table->softDeletes();
 
         });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Interface\Http\Controllers\Api\AuthController;
+use App\Interface\Http\Controllers\Api\GoalController;
 use App\Interface\Http\Controllers\Api\ProjectController;
 use Illuminate\Support\Facades\Route;
 use App\Interface\Http\Controllers\Api\TaskController;
@@ -32,3 +33,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+
+Route::middleware('auth:sanctum')->prefix('projects/{project}')->group(function () {
+    Route::get('goals', [GoalController::class, 'index'])->name('api.projects.goals.index');
+    Route::post('goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
+});
+
+
