@@ -1,133 +1,92 @@
 # ⏱️ ChronoTrack
 
-ChronoTrack is a **task scheduler + time tracker** built using Laravel, Inertia.js (Vue), and Clean Architecture principles.
+ChronoTrack is a **project-focused task scheduler + time tracker** built with Laravel, Inertia.js (Vue), and Clean Architecture principles.
+
+---
 
 ## 📦 Tech Stack
 
-- **Laravel** — Backend framework (Clean Architecture)
-- **Inertia.js** — UI glue between Laravel and Vue
-- **Vue 3** — Reactive frontend components
-- **Tailwind CSS** — Modern utility-first styling
-- **Pest** — Developer-friendly testing framework
+- **Laravel** — Backend framework (Clean Architecture, DDD patterns)  
+- **Inertia.js** — UI glue between Laravel and Vue  
+- **Vue 3** — Reactive frontend components  
+- **Tailwind CSS** — Utility-first styling  
+- **Pest** — Developer-friendly testing framework  
 
 ---
 
 ## 🧩 Architecture
 
-Organized with a Clean Architecture structure:
+Organized by Clean Architecture principles:
 ```
 /app
-    /Domain
-    /Application
-    /Infrastructure
-    /UI
+    /Domain         # contracts, entities, exceptions
+    /Application    # DTOs, services, use cases
+    /Infrastructure # Eloquent models, repositories
+    /Interface      # HTTP controllers, requests
 ```
 
-
-Each layer is responsible for a specific concern, promoting separation of concerns, testability, and flexibility.
+- Clear separation of concerns  
+- Service layer driven by DTOs  
+- Repository interfaces decouple persistence from domain logic  
 
 ---
 
-## ✅ Core Features (Planned & In Progress)
+## ✅ Core Features
 
 ### 🗂️ Projects
 - [x] Create project  
-- [ ] View all projects  
+- [x] View all projects  
 - [ ] Archive/delete project  
 
 ### ✅ Tasks
-- [x] Create task (linked to project)  
-- [ ] View tasks per project  
+- [x] Create task (scoped to project)  
+- [x] View tasks per project  
 - [ ] Edit/delete task  
 - [ ] Task status (To Do, In Progress, Done)  
 
 ### ⏱️ Timers
 - [x] Start timer on task  
 - [x] Stop timer  
-- [ ] Prevent multiple timers per user  
-- [ ] View time logs per task  
+- [x] View timers per task  
+- [ ] Prevent multiple active timers per user  
 
 ### 🎯 Goals
-- [ ] Create goal (e.g., "Master symbolic manipulation")  
-- [ ] Attach goal to project  
-- [ ] Mark goal as achieved  
-- [ ] View goals progress per project  
+- [ ] Create goal (scoped to project)  
+- [ ] List goals per project  
+- [ ] Attach tasks to goals (via pivot)  
+- [ ] Mark goal complete  
+- [ ] Show goal progress  
 
 ### 📊 Reports
-- [ ] View time spent per project  
-- [ ] View time per day/week/month  
-- [ ] Export CSV or JSON summary  
+- [ ] Aggregate timers by project  
+- [ ] Time per day/week/month  
+- [ ] Billable vs non-billable hours  
+- [ ] Export CSV/JSON  
 
 ### 👤 User System
-- [ ] Authentication  
-- [ ] View own tasks and timers only  
+- [x] Register user  
+- [x] Login user  
+- [x] Authenticated user info (`/me`)  
+- [x] Logout  
+- [ ] Restrict tasks/goals/timers per user (ownership rules)  
+
 
 ---
 
 ## 🚧 Status
 
-Currently under development — building out vertical slices by use case, starting with the **StartTimer** flow.
+- Current focus: **Goals** (project-scoped create + list).  
+- Next: goal–task linkage, reporting services, and user auth.  
 
 ---
 
 ## 🧠 Philosophy
 
-Built to explore:
-- Clean architecture in Laravel
-- DDD patterns (Entities, Use Cases, Interfaces)
-- Inertia as a full-stack bridge
-- Vue 3 composition API in practice
-
----
-
-
-Each layer is responsible for a specific concern, promoting separation of concerns, testability, and flexibility.
-
----
-
-## ✅ Core Features (Planned & In Progress)
-
-### 🗂️ Projects
-- [x] Create project
-- [x] View all projects
-- [ ] Archive/delete project
-
-### ✅ Tasks
-- [x] Create task (linked to project)
-- [ ] View tasks per project
-- [ ] Edit/delete task
-- [ ] Task status (To Do, In Progress, Done)
-
-### ⏱️ Timers
-- [x] Start timer on task
-- [x] Stop timer
-- [ ] Prevent multiple timers per user
-- [ ] View time logs per task
-
-### 📊 Reports
-- [ ] View time spent per project
-- [ ] View time per day/week/month
-- [ ] Export CSV or JSON summary
-
-### 👤 User System
-- [ ] Authentication
-- [ ] View own tasks and timers only
-
----
-
-## 🚧 Status
-
-Currently under development — building out vertical slices by use case, starting with the **StartTimer** flow.
-
----
-
-## 🧠 Philosophy
-
-Built to explore:
-- Clean architecture in Laravel
-- DDD patterns (Entities, Use Cases, Interfaces)
-- Inertia as a full-stack bridge
-- Vue 3 composition API in practice
+ChronoTrack is a playground for:  
+- Practicing Clean Architecture in Laravel  
+- Modeling domains with DDD  
+- Building vertical slices (routes → requests → DTOs → services → repos → models)  
+- Exploring time-tracking and reporting design  
 
 ---
 
@@ -140,25 +99,31 @@ make up
 make install
 make dev
 ```
-## ⚠️ Warning: Running with `artisan serve` inside Docker
 
-This project runs the Laravel application using the built-in PHP development server via make install or make dev:
+### ⚠️ Note on Docker
 
-```bash
-php artisan serve --host=0.0.0.0 --port=8000
+This app uses `artisan serve` inside Docker (`make dev`).  
+Networking quirks may appear depending on Docker Desktop / WSL2 setup.  
+If `http://localhost:8000` doesn’t work:  
+- Try stopping Docker Desktop entirely.  
+- Or change `docker-compose.yml` to map `8080:8000` and use `http://localhost:8080`.  
+
+---
+
+## 👤 Test User
+
+A seeded test user is available for login:  
+
 ```
-Because of this, networking can sometimes conflict with Docker Desktop (especially on Windows/WSL2 or macOS).
+Email:    daniel@chronotrack.com  
+Password: password123
+```
 
-If you see errors like “connection reset by peer” or cannot reach the app on http://localhost:8000, it may be due to Docker Desktop interfering with port forwarding.
+---
 
-In some cases, turning Docker Desktop off (or stopping other services on port 8000) resolves the issue.
+## 🎯 Future Goals
 
-Oddly, there are scenarios where running Docker Desktop with the project makes things work again — so behavior may differ depending on your local setup.
-
-👉 If you encounter connectivity problems:
-
-Stop containers with docker compose down.
-
-Restart without Docker Desktop running, and re-try php artisan serve.
-
-Or switch the exposed port in docker-compose.yml (e.g. 8080:8000) and use http://localhost:8080.
+- [ ] Real-time timers (WebSockets, ReactPHP)  
+- [ ] Advanced reports (per user, per client, per project)  
+- [ ] Notifications (reminders for deadlines/goals)  
+- [ ] Role-based access (shared projects, team goals)  
