@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Domain\Users\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
+use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,8 +18,9 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Daniel',
+            'email' => 'daniel@chronotrack.com',
+            'password' => Hash::make('password123'), // secure hashing
         ]);
     }
 }

@@ -33,15 +33,15 @@ class TaskController extends Controller
         ], 201);
     }
 
-    public function index(TaskFilterRequest $request, string $project_id): JsonResponse
+    public function index(TaskFilterRequest $request, Project $project): JsonResponse
     {
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
         $dto = new TaskFilterDTO(...[
             ...$request->validated(),
-            'project_id' => $project_id,
-            'user_id' => $auth->id(),
+            'project_id' => $project->id,
+            'user_id'    => $auth->id(),
         ]);
 
         $tasks = app(ListTasksService::class)->handle($dto);
