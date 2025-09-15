@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('project_user', function (Blueprint $table) {
             $table->foreignUuid('project_id')->constrained()->onDelete('cascade');
+            $table->decimal('budget_amount', 12, 2)->nullable(); // e.g. $50,000
+            $table->integer('budget_hours')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->primary(['project_id', 'user_id']);
         });
