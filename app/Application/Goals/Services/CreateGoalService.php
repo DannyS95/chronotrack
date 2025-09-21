@@ -2,7 +2,7 @@
 
 namespace App\Application\Goals\Services;
 
-use App\Application\Goals\DTOs\CreateGoalDTO;
+use App\Application\Goals\DTO\CreateGoalDTO;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 
 final class CreateGoalService

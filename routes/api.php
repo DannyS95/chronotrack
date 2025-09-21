@@ -36,4 +36,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->prefix('projects/{project}')->group(function () {
     Route::get('goals', [GoalController::class, 'index'])->name('api.projects.goals.index');
     Route::post('goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
+    Route::post('/projects/{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'attach']);
+    Route::delete('/projects/{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'detach']);
 });

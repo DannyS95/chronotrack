@@ -35,7 +35,7 @@ class ProjectController extends Controller
     {
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
-
+        
         $dto = new ProjectFilterDTO(...[
             ...$request->validated(),
             'user_id' => $auth->id(),

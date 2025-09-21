@@ -15,8 +15,7 @@ final class GoalFilterRequest extends FormRequest
     {
         return [
             'status'          => ['sometimes', 'in:active,dormant,dropped,complete'],
-            'deadline_before' => ['sometimes', 'date'],
-            'deadline_after'  => ['sometimes', 'date'],
+            'deadline'        => ['sometimes', 'date'],
             'completion_rule' => ['sometimes', 'in:task_based,deadline_based,hybrid'],
         ];
     }

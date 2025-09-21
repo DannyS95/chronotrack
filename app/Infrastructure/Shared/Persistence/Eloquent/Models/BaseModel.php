@@ -2,26 +2,21 @@
 
 namespace App\Infrastructure\Shared\Persistence\Eloquent\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 abstract class BaseModel extends Model
 {
-    use HasFactory, SoftDeletes;
-
-    /**
-     * Use UUIDs as primary keys.
-     */
-    public $incrementing = false;
     protected $keyType = 'string';
+    public $incrementing = false;
 
     protected static function boot()
     {
         parent::boot();
 
+        // Auto-generate UUIDs
         static::creating(function ($model) {
             if (empty($model->{$model->getKeyName()})) {
                 $model->{$model->getKeyName()} = (string) Str::uuid();
@@ -29,63 +24,61 @@ abstract class BaseModel extends Model
         });
     }
 
+    /**
+     * Each model must define allowed filters.
+     */
+    abstract public static function filters(): array;
+
+    /**
+     * Apply filters + sorting to a query.
+     */
     public static function applyFilters(array $filters): Builder
     {
-        $query = static::query();
-        $map = static::filterMap();
+        $instance = new static;
+        $query = $instance->newQuery();
+        $map = $instance->filters();
 
-        // Apply sorting first
-        if (isset($filters['sort_by'])) {
-            $query->orderBy($filters['sort_by'], $filters['order'] ?? 'asc');
+        foreach ($filters as $field => $value) {
+            if (
+                $value === null || $value === '' ||
+                in_array($field, ['sort_by', 'sort_direction', 'per_page', 'order'])
+            ) {
+                continue;
+            }
+
+            if (!isset($map[$field])) {
+                throw new InvalidArgumentException("Unsupported filter: {$field}");
+            }
+
+            $definition = $map[$field];
+            [$operator, $column] = str_contains($definition, '.')
+                ? explode('.', $definition, 2)
+                : [$definition, $field];
+
+            $query = self::applyOperator($query, $operator, $column, $value);
         }
 
-        foreach ($map as $param => $rule) {
-            if (!array_key_exists($param, $filters) || is_null($filters[$param])) {
-                continue;
-            }
+        // Sorting
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortDirection = $filters['order'] ?? $filters['sort_direction'] ?? 'desc';
 
-            $value = $filters[$param];
-
-            if ($rule === 'equals') {
-                $query->where($param, '=', $value);
-                continue;
-            }
-
-            if ($rule === 'like') {
-                $query->where($param, 'LIKE', '%' . $value . '%');
-                continue;
-            }
-
-            if (str_contains($rule, '.')) {
-                [$operator, $column] = explode('.', $rule);
-
-                if ($operator === 'isnull') {
-                    if ($value) {
-                        $query->whereNull($column);
-                    } else {
-                        $query->whereNotNull($column);
-                    }
-                    continue;
-                }
-
-                $query->where($column, static::resolveOperator($operator), $value);
-                continue;
-            }
-
-
-            throw new \InvalidArgumentException("Unknown filter rule: {$rule}");
-        }
+        $query->orderBy($sortBy, $sortDirection);
 
         return $query;
     }
 
-    private static function resolveOperator(string $operator): string
+
+    protected static function applyOperator(Builder $query, string $operator, string $column, mixed $value): Builder
     {
         return match ($operator) {
-            'equals' => '=',
-            'after' => '>=',
-            'before' => '<=',
-            default  => throw new \InvalidArgumentException("Unsupported operator: {$operator}"),
+            'equals' => $query->where($column, '=', $value),
+            'like'   => $query->where($column, 'LIKE', "%{$value}%"),
+            'after'  => $query->where($column, '>=', $value),
+            'before' => $query->where($column, '<=', $value),
+            'date'   => $query->whereDate($column, '=', $value),
+            'isnull'  => $query->whereNull($column),
+            'notnull' => $query->whereNotNull($column),
+            default  => throw new InvalidArgumentException("Unsupported operator: {$operator}"),
         };
     }
 }

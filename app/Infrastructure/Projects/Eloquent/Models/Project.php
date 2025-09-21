@@ -2,11 +2,12 @@
 
 namespace App\Infrastructure\Projects\Eloquent\Models;
 
+use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Project extends BaseModel
 {
@@ -25,15 +26,9 @@ final class Project extends BaseModel
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected static function boot(): void
+    public function getRouteKeyName(): string
     {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) Str::uuid();
-            }
-        });
+        return 'id'; // so it binds UUID instead of default int
     }
 
     public function users()
@@ -51,16 +46,21 @@ final class Project extends BaseModel
         return $this->hasMany(Task::class);
     }
 
-    public static function filterMap(): array
+    public static function filters(): array
     {
         return [
             'name'          => 'like',
+            'id'            => 'equals',
+            'user_id'        => 'equals',
             'description'   => 'like',
-            'deadlineFrom'  => 'after.deadline',
-            'deadlineTo'    => 'before.deadline',
+            'deadline'      => 'date',
             'from'          => 'after.created_at',
             'to'            => 'before.created_at',
-            'project_id'    => 'equals',
         ];
+    }
+
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class, 'project_id');
     }
 }

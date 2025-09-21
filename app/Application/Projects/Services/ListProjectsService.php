@@ -15,7 +15,8 @@ final class ListProjectsService
     public function handle(ProjectFilterDto $projectFiltersDto): LengthAwarePaginator
     {
         return $this->repository
-            ->getAll($projectFiltersDto)
-            ->paginate($projectFiltersDto->perPage);
+            ->getAll($projectFiltersDto->toArray())
+            ->paginate($projectFiltersDto->per_page);
     }
 }
+    

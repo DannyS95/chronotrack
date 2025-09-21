@@ -2,7 +2,7 @@
 
 namespace App\Interface\Http\Controllers\Api;
 
-use App\Application\Timers\DTOs\TimerFilterDTO;
+use App\Application\Timers\DTO\TimerFilterDTO;
 use App\Application\Timers\Services\ListTimersService;
 use App\Application\Timers\Services\TimerService;
 use App\Interface\Http\Controllers\Controller;

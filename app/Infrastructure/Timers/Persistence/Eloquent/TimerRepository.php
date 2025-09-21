@@ -2,7 +2,7 @@
 
 namespace App\Infrastructure\Timers\Persistence\Eloquent;
 
-use App\Application\Timers\DTOs\TimerFilterDTO;
+use App\Application\Timers\DTO\TimerFilterDTO;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -66,7 +66,7 @@ final class TimerRepository implements TimerRepositoryInterface
     public function list(array $filters): LengthAwarePaginator
     {
         return Timer::query()
-            ->tap(fn($query) => Timer::applyFilters($filters)
+            ->tap(fn($query) => Timer::filters($filters)
                 ->mergeConstraintsFrom($query->getModel()->newEloquentBuilder($query->getQuery()))
             )
             ->orderByDesc('started_at')

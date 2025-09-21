@@ -2,7 +2,7 @@
 
 namespace App\Domain\Timers\Contracts;
 
-use App\Application\Timers\DTOs\TimerFilterDTO;
+use App\Application\Timers\DTO\TimerFilterDTO;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 

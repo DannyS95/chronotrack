@@ -23,7 +23,7 @@ final class ListTasksService
     public function handle(TaskFilterDTO $dto): LengthAwarePaginator
     {
         /** @var Builder<Task> $query */
-        $query = $this->taskRepository->getFiltered($dto->toArray(), $dto->user_id);
+        $query = $this->taskRepository->getFiltered($dto->toArray(), $dto->user_id, $dto->project_id);
 
         return $query->paginate($dto->per_page);
     }

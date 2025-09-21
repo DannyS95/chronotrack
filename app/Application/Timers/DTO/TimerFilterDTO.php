@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Timers\DTOs;
+namespace App\Application\Timers\DTO;
 
 class TimerFilterDTO
 {

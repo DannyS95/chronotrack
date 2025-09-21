@@ -6,7 +6,6 @@ use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
 final class Task extends BaseModel
 {
@@ -26,17 +25,6 @@ final class Task extends BaseModel
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) Str::uuid();
-            }
-        });
-    }
-
     public function project()
     {
         return $this->belongsTo(
@@ -45,15 +33,27 @@ final class Task extends BaseModel
         );
     }
 
-    public static function filterMap(): array
+    public static function filters(): array
     {
         return [
-            'id' => 'equals',
-            'task_id' => 'equals',
-            'started_at' => 'after.started_at',
-            'started_to' => 'before.started_at',
-            'stopped_from' => 'after.stopped_at',
-            'stopped_to' => 'before.stopped_at',
+            'id'              => 'equals',
+            'project_id'      => 'equals',
+            'title'           => 'like',
+            'description'     => 'like',
+            'priority'        => 'equals',
+
+            // Due date filters
+            'due_from'        => 'after.due_at',
+            'due_to'          => 'before.due_at',
+
+            // Last activity filters
+            'last_activity_from' => 'after.last_activity_at',
+            'last_activity_to'   => 'before.last_activity_at',
+
+            // Creation date filters
+            'from'            => 'after.created_at',
+            'to'              => 'before.created_at',
         ];
     }
+
 }

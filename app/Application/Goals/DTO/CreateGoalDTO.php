@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Application\Goals\DTOs;
+namespace App\Application\Goals\DTO;
 
 class CreateGoalDTO
 {

@@ -2,7 +2,7 @@
 
 namespace App\Application\Timers\Services;
 
-use App\Application\Timers\DTOs\TimerFilterDTO;
+use App\Application\Timers\DTO\TimerFilterDTO;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 

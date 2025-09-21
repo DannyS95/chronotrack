@@ -19,18 +19,16 @@ class Timer extends BaseModel
     ];
 
     /**
-     * Filters that can be applied through applyFilters()
+     * Filters that can be applied through filters()
      */
-    public static function filterMap(): array
+    public static function filters(): array
     {
         return [
             'id'            => 'equals',
             'task_id'       => 'equals',
-            'started_after' => 'after.started_at',
-            'started_before'=> 'before.started_at',
-            'stopped_after' => 'after.stopped_at',
-            'stopped_before'=> 'before.stopped_at',
-            'active' => 'isnull.stopped_at',
+            'started_at'    => 'date',
+            'stopped_at'    => 'date',
+            'active'        => 'isnull.stopped_at',
         ];
     }
 }

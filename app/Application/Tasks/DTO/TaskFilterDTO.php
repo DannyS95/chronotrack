@@ -19,7 +19,6 @@ final class TaskFilterDTO
     {
         return [
             'project_id' => $this->project_id,
-            'user_id' => $this->user_id,
             'title' => $this->title,
             'from' => $this->from,
             'to' => $this->to,

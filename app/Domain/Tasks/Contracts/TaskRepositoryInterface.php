@@ -8,7 +8,7 @@ interface TaskRepositoryInterface
 {
     public function create(array $data): mixed;
 
-    public function getFiltered(array $filters, string $userId): Builder;
+    public function getFiltered(array $filters, string $user_id, string $project_id): Builder;
 
     public function userOwnsTask(string $taskId, int $userId): bool;
 }

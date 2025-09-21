@@ -111,7 +111,7 @@
 							"file": {}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sortBy=deadline",
+							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sort_by=deadline",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -135,7 +135,7 @@
 									"value": "2026-12-31"
 								},
 								{
-									"key": "sortBy",
+									"key": "sort_by",
 									"value": "deadline"
 								}
 							]
@@ -253,7 +253,7 @@
 							"file": {}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sortBy=deadline",
+							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sort_by=deadline",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -277,7 +277,7 @@
 									"value": "2026-12-31"
 								},
 								{
-									"key": "sortBy",
+									"key": "sort_by",
 									"value": "deadline"
 								}
 							]

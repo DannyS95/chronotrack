@@ -14,14 +14,17 @@ final class TaskRepository implements TaskRepositoryInterface
         return Task::create($data);
     }
 
-    public function getFiltered(array $filters, string $user_id): Builder
+    public function getFiltered(array $filters, string $user_id, string $project_id): Builder
     {
-        return Project::query()
+        // Ensure the project exists and belongs to the user
+        $project = Project::query()
+            ->where('id', $project_id)
             ->where('user_id', $user_id)
-            ->firstOrFail()
-            ->tasks()
-            ->tap(fn($query) => Task::applyFilters($filters)
-            ->mergeConstraintsFrom($query->getModel()->newEloquentBuilder($query->getQuery())));
+            ->firstOrFail();
+
+        return Task::filters($filters)
+            ->where('project_id', $project->id)
+            ->whereHas('project', fn($q) => $q->where('user_id', $user_id));
     }
 
     public function userOwnsTask(string $taskId, int $userId): bool

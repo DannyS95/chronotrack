@@ -14,6 +14,7 @@ class ProjectFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => ['nullable', 'string', 'uuid'],
             'search' => 'nullable|string',
             'name' => 'nullable|string',
             'description' => 'nullable|string',
@@ -22,7 +23,7 @@ class ProjectFilterRequest extends FormRequest
             'deadlineFrom' => 'nullable|date',
             'deadlineTo' => 'nullable|date',
             'archived' => 'nullable|boolean',
-            'sortBy' => 'nullable|in:name,created_at,deadline',
+            'sort_by' => 'nullable|in:name,created_at,deadline',
             'sortDirection' => 'nullable|in:asc,desc',
             'perPage' => 'nullable|integer|min:1|max:100',
         ];

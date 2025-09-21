@@ -2,7 +2,6 @@
 
 namespace App\Infrastructure\Projects\Persistence\Eloquent;
 
-use App\Application\Projects\Dto\ProjectFilterDTO;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Domain\Projects\Contracts\ProjectRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,8 +28,8 @@ final class ProjectRepository implements ProjectRepositoryInterface
         return Project::where('user_id', $id)->latest()->get();
     }
 
-    public function getAll(ProjectFilterDTO $filters): Builder
+    public function getAll(array $filters): Builder
     {
-        return Project::applyFilters((array) $filters);
+        return Project::filters((array) $filters);
     }
 }

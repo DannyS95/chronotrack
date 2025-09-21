@@ -10,5 +10,5 @@ interface ProjectRepositoryInterface
 {
     public function create(array $data): Project;
     public function findById(string $id): ?Project;
-    public function getAll(ProjectFilterDto $id): Builder;
+    public function getAll(array $id): Builder;
 }

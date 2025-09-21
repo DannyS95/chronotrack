@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Goals\Eloquent\Models;
 
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
+use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,7 @@ final class Goal extends BaseModel
         'title',
         'description',
         'target_date',
+        'deadline',
         'project_id',
         'last_activity_at',
         'reminder_every_n_days',
@@ -38,16 +40,23 @@ final class Goal extends BaseModel
         });
     }
 
-    public static function filterMap(): array
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'goal_task');
+    }
+
+
+    public static function filters(): array
     {
         return [
             'title'               => 'like',
+            'deadline'            => 'before',
             'description'         => 'like',
             'status'              => 'equals',
-            'from'                => 'after.created_at',
-            'to'                  => 'before.created_at',
-            'last_activity_from'  => 'after.last_activity_at',
-            'last_activity_to'    => 'before.last_activity_at',
+            'from'                => 'after',
+            'to'                  => 'before',
+            'last_activity_from'  => 'after',
+            'last_activity_to'    => 'before',
         ];
     }
 }
