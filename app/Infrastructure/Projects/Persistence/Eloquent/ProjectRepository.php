@@ -30,6 +30,6 @@ final class ProjectRepository implements ProjectRepositoryInterface
 
     public function getAll(array $filters): Builder
     {
-        return Project::filters((array) $filters);
+        return Project::applyFilters((array) $filters);
     }
 }

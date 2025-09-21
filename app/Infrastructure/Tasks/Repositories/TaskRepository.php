@@ -22,7 +22,7 @@ final class TaskRepository implements TaskRepositoryInterface
             ->where('user_id', $user_id)
             ->firstOrFail();
 
-        return Task::filters($filters)
+        return Task::applyFilters($filters)
             ->where('project_id', $project->id)
             ->whereHas('project', fn($q) => $q->where('user_id', $user_id));
     }
