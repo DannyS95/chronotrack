@@ -14,6 +14,7 @@ final class GoalFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => ['nullable', 'string', 'uuid'],
             'status'          => ['sometimes', 'in:active,dormant,dropped,complete'],
             'deadline'        => ['sometimes', 'date'],
             'completion_rule' => ['sometimes', 'in:task_based,deadline_based,hybrid'],

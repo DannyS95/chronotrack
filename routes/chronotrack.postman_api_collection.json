@@ -78,7 +78,7 @@
 					"response": []
 				},
 				{
-					"name": "Project",
+					"name": "Projects",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -111,7 +111,7 @@
 							"file": {}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sort_by=deadline",
+							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sortBy=deadline",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -135,7 +135,7 @@
 									"value": "2026-12-31"
 								},
 								{
-									"key": "sort_by",
+									"key": "sortBy",
 									"value": "deadline"
 								}
 							]
@@ -150,6 +150,77 @@
 			"item": [
 				{
 					"name": "Timer Stop",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();\r",
+									"\r",
+									"if (json.data && json.data.id) {\r",
+									"    pm.environment.set(\"project_id\", json.data.id);\r",
+									"    console.log(\"✅ project_id set:\", json.data.id);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/api/tasks/{{task_id}}/timers/stop",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"tasks",
+								"{{task_id}}",
+								"timers",
+								"stop"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Timer Start",
 					"event": [
 						{
 							"listen": "test",
@@ -253,7 +324,7 @@
 							"file": {}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sort_by=deadline",
+							"raw": "http://localhost:8000/api/tasks/{{task_id}}/timers?active=false&started_at=2024-01-01&stopped_at=2026-12-31",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -261,24 +332,22 @@
 							"port": "8000",
 							"path": [
 								"api",
-								"projects"
+								"tasks",
+								"{{task_id}}",
+								"timers"
 							],
 							"query": [
 								{
-									"key": "name",
-									"value": "I%20lost%20track%20of%20time"
+									"key": "active",
+									"value": "false"
 								},
 								{
-									"key": "from",
+									"key": "started_at",
 									"value": "2024-01-01"
 								},
 								{
-									"key": "to",
+									"key": "stopped_at",
 									"value": "2026-12-31"
-								},
-								{
-									"key": "sort_by",
-									"value": "deadline"
 								}
 							]
 						}
@@ -293,6 +362,16 @@
 				{
 					"name": "Task",
 					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
 						{
 							"listen": "test",
 							"script": {
@@ -421,6 +500,144 @@
 								{
 									"key": "order",
 									"value": "asc"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Goals",
+			"item": [
+				{
+					"name": "Goal",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();\r",
+									"\r",
+									"if (json.id && json.id) {\r",
+									"    pm.environment.set(\"goal_id\", json.id);\r",
+									"    console.log(\"✅ goal_id set:\", json.id);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"Finish Stage 3.5 CRUD cleanup\",\r\n  \"description\": \"Enforce ownership rules and close Goals MVP\",\r\n  \"status\": \"active\",\r\n  \"deadline\": \"2025-10-01\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/api/projects/{{project_id}}/goals",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"projects",
+								"{{project_id}}",
+								"goals"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Goals",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/projects/{{project_id}}/goals?status=active&deadline=2025-12-31",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"projects",
+								"{{project_id}}",
+								"goals"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "active"
+								},
+								{
+									"key": "deadline",
+									"value": "2025-12-31"
 								}
 							]
 						}

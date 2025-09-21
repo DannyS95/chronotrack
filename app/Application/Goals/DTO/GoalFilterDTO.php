@@ -6,6 +6,7 @@ class GoalFilterDTO
 {
     public function __construct(
         public readonly ?string $status = null,
+        public readonly ?string $id = null,
         public readonly ?string $from = null,
         public readonly ?string $to = null,
         public readonly ?string $deadline = null,
@@ -18,6 +19,7 @@ class GoalFilterDTO
     {
         return [
             'status'     => $this->status,
+            'id'         => $this->id,
             'from'       => $this->from,
             'to'         => $this->to,
             'deadline'   => $this->deadline,

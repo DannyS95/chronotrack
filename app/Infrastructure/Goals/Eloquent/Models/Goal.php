@@ -50,6 +50,7 @@ final class Goal extends BaseModel
     {
         return [
             'title'               => 'like',
+            'id'                  => 'equals',
             'deadline'            => 'before',
             'description'         => 'like',
             'status'              => 'equals',

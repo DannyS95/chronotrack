@@ -30,9 +30,6 @@ final class GoalController extends Controller
      */
     public function index(GoalFilterRequest $request, Project $project): JsonResponse
     {
-        /** @var \Illuminate\Contracts\Auth\Guard $auth */
-        $auth = auth();
-
         $dto = new GoalFilterDTO(...[
             ...$request->validated(),
         ]);
