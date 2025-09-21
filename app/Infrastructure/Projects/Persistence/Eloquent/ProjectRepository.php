@@ -11,11 +11,7 @@ final class ProjectRepository implements ProjectRepositoryInterface
 {
     public function create(array $data): Project
     {
-        $project = Project::create($data);
-
-        $project->users()->sync($data['user_ids'] ?? []);
-
-        return $project;
+        return Project::create($data);
     }
 
     public function findById(string $id): ?Project

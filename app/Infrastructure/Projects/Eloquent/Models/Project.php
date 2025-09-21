@@ -31,16 +31,6 @@ final class Project extends BaseModel
         return 'id'; // so it binds UUID instead of default int
     }
 
-    public function users()
-    {
-        return $this->belongsToMany(
-            User::class,
-            'project_user',
-            'project_id',
-            'user_id'
-        );
-    }
-
     public function tasks()
     {
         return $this->hasMany(Task::class);
