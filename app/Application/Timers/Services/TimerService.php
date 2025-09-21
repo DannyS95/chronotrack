@@ -18,19 +18,19 @@ final class TimerService
         private readonly TransactionRunner $tx,
     ) {}
 
-    public function start(string $taskId, int $userId): Timer
+    public function start(string $task_id, int $user_id): Timer
     {
-        return $this->tx->run(function () use ($taskId, $userId) {
-            if (! $this->taskRepository->userOwnsTask($taskId, $userId)) {
+        return $this->tx->run(function () use ($task_id, $user_id) {
+            if (! $this->taskRepository->userOwnsTask($task_id, $user_id)) {
                 throw new NotOwnerOfTask();
             }
 
-            $active = $this->timers->findActiveForUserLock($userId);
+            $active = $this->timers->findActiveForUserLock($user_id, $task_id);
             if ($active) {
                 throw new ActiveTimerExists((string) $active->id);
             }
 
-            return $this->timers->createRunning($taskId, $userId);
+            return $this->timers->createRunning($task_id, $user_id);
         });
     }
 

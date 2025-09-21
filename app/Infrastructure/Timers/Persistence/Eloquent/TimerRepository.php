@@ -9,14 +9,15 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class TimerRepository implements TimerRepositoryInterface
 {
-    public function findActiveForUserLock(int $userId): ?Timer
+    public function findActiveForUserLock(string $user_id, string $task_id): ?Timer
     {
         return Timer::query()
             ->select('timers.*')
             ->join('tasks', 'tasks.id', '=', 'timers.task_id')
             ->join('projects', 'projects.id', '=', 'tasks.project_id')
             ->whereNull('timers.stopped_at')
-            ->where('projects.user_id', $userId)
+            ->where('projects.user_id', $user_id)
+            ->where('tasks.id', $task_id)   // 🔥 add this line
             ->latest('timers.started_at')
             ->lockForUpdate()
             ->first();
@@ -66,7 +67,7 @@ final class TimerRepository implements TimerRepositoryInterface
     public function list(array $filters): LengthAwarePaginator
     {
         return Timer::query()
-            ->tap(fn($query) => Timer::filters($filters)
+            ->tap(fn($query) => Timer::applyFilters($filters)
                 ->mergeConstraintsFrom($query->getModel()->newEloquentBuilder($query->getQuery()))
             )
             ->orderByDesc('started_at')
