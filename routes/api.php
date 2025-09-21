@@ -1,11 +1,11 @@
 <?php
 
 use App\Interface\Http\Controllers\Api\AuthController;
-use App\Interface\Http\Controllers\Api\GoalController;
 use App\Interface\Http\Controllers\Api\ProjectController;
 use Illuminate\Support\Facades\Route;
 use App\Interface\Http\Controllers\Api\TaskController;
 use App\Interface\Http\Controllers\Api\TimerController;
+use App\Interface\Http\Controllers\Api\GoalController;
 
 Route::middleware(['auth:sanctum', 'throttle:20,1'])->prefix('projects')->group(function () {
     Route::post('/', [ProjectController::class, 'store']);
@@ -13,7 +13,6 @@ Route::middleware(['auth:sanctum', 'throttle:20,1'])->prefix('projects')->group(
     Route::get('{project}/tasks', [TaskController::class, 'index']);
     Route::get('/', [ProjectController::class, 'index']);
 });
-
 
 Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
     Route::post('{task}/timers/start', [TimerController::class, 'start'])
@@ -34,10 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-
 Route::middleware('auth:sanctum')->prefix('projects/{project}')->group(function () {
     Route::get('goals', [GoalController::class, 'index'])->name('api.projects.goals.index');
     Route::post('goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
 });
-
-

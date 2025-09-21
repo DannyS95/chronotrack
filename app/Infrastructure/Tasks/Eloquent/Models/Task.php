@@ -50,7 +50,6 @@ final class Task extends BaseModel
         return [
             'id' => 'equals',
             'task_id' => 'equals',
-            'user_id' => 'equals',
             'started_at' => 'after.started_at',
             'started_to' => 'before.started_at',
             'stopped_from' => 'after.stopped_at',

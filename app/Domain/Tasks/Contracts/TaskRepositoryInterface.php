@@ -2,15 +2,13 @@
 
 namespace App\Domain\Tasks\Contracts;
 
-use App\Application\Tasks\DTO\CreateTaskDTO;
-use App\Application\Tasks\DTO\TaskFilterDTO;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
 interface TaskRepositoryInterface
 {
-    public function create(CreateTaskDTO $dto): mixed;
+    public function create(array $data): mixed;
 
-    public function getFiltered(TaskFilterDTO $dto): Builder;
+    public function getFiltered(array $filters, string $userId): Builder;
 
     public function userOwnsTask(string $taskId, int $userId): bool;
 }

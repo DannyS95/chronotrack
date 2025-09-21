@@ -17,11 +17,15 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamp('deadline')->nullable();
             $table->timestamp('completed_at')->nullable();
-            $table->enum('status', ['active', 'dormant', 'dropped', 'complete'])->default('active');
+            $table->enum('status', ['active', 'dormant', 'dropped', 'complete'])
+                ->default('active');
             $table->uuid('project_id');
-            $table->foreign('project_id')->references('id')->on('projects')->cascadeOnDelete();
+            $table->foreign('project_id')->references('id')->on('projects')
+                ->cascadeOnDelete();
+            $table->enum('completion_rule', ['task_based', 'deadline_based', 'hybrid'])
+                ->default('hybrid');
 
-            $table->timestamps();   
+            $table->timestamps();
             $table->softDeletes();
 
         });

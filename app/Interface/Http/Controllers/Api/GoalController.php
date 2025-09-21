@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Interface\Http\Controllers\Api;
+
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Application\Goals\DTOs\CreateGoalDTO;
 use App\Application\Goals\DTOs\GoalFilterDTO;
@@ -35,8 +37,6 @@ final class GoalController extends Controller
 
         return response()->json($goals);
     }
-
-
 
     /**
      * Create a new goal in a project.

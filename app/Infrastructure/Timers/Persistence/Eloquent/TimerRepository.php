@@ -63,10 +63,10 @@ final class TimerRepository implements TimerRepositoryInterface
             ->first();
     }
 
-    public function list(TimerFilterDTO $dto): LengthAwarePaginator
+    public function list(array $filters): LengthAwarePaginator
     {
         return Timer::query()
-            ->tap(fn($query) => Timer::applyFilters($dto->toArray())
+            ->tap(fn($query) => Timer::applyFilters($filters)
                 ->mergeConstraintsFrom($query->getModel()->newEloquentBuilder($query->getQuery()))
             )
             ->orderByDesc('started_at')

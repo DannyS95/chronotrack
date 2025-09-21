@@ -17,6 +17,7 @@ final class Goal extends BaseModel
         'title',
         'description',
         'target_date',
+        'project_id',
         'last_activity_at',
         'reminder_every_n_days',
         'completed_at',

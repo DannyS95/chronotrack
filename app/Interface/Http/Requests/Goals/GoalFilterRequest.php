@@ -14,12 +14,10 @@ final class GoalFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status'    => ['nullable', 'in:active,dormant,dropped,complete'],
-            'from'      => ['nullable', 'date'],  // deadline after
-            'to'        => ['nullable', 'date'],  // deadline before
-            'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
-            'sort_by'   => ['nullable', 'in:deadline,created_at'],
-            'order'     => ['nullable', 'in:asc,desc'],
+            'status'          => ['sometimes', 'in:active,dormant,dropped,complete'],
+            'deadline_before' => ['sometimes', 'date'],
+            'deadline_after'  => ['sometimes', 'date'],
+            'completion_rule' => ['sometimes', 'in:task_based,deadline_based,hybrid'],
         ];
     }
 }

@@ -16,5 +16,5 @@ interface TimerRepositoryInterface
 
     public function findActiveWithContext(int $userId): ?Timer;
 
-    public function list(TimerFilterDTO $dto): LengthAwarePaginator;
+    public function list(array $filters): LengthAwarePaginator;
 }

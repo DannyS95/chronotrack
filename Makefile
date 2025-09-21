@@ -52,18 +52,20 @@ npm-dev:
 test:
 	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) ./vendor/bin/pest $(ARGS)
 
-# === Shell ===
-sh:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) sh
-
 bash:
-	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) bash
+	$(DOCKER_COMPOSE) exec $(PHP_CONTAINER) bash || $(DOCKER_COMPOSE) exec $(PHP_CONTAINER) sh
 
 up:
 	$(DOCKER_COMPOSE) up -d
 
 down:
 	$(DOCKER_COMPOSE) down
+
+build:
+	$(DOCKER_COMPOSE) up --build -d
+
+stop:
+	$(DOCKER_COMPOSE) stop
 
 restart:
 	$(DOCKER_COMPOSE) down && $(DOCKER_COMPOSE) up -d

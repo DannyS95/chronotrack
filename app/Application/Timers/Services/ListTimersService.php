@@ -14,6 +14,6 @@ final class ListTimersService
 
     public function handle(TimerFilterDTO $dto): LengthAwarePaginator
     {
-        return $this->repo->list($dto);
+        return $this->repo->list($dto->toArray());
     }
 }

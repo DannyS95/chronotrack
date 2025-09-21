@@ -13,6 +13,6 @@ final class CreateTaskService
 
     public function handle(CreateTaskDTO $dto): mixed
     {
-        return $this->taskRepository->create($dto);
+        return $this->taskRepository->create($dto->toArray());
     }
 }
