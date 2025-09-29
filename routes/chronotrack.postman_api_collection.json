@@ -7,6 +7,10 @@
 	},
 	"item": [
 		{
+			"name": "Login",
+			"item": []
+		},
+		{
 			"name": "Project",
 			"item": [
 				{
@@ -25,7 +29,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -63,14 +68,11 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects",
-							"protocol": "http",
+							"raw": "{{base_url}}/projects",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"projects"
 							]
 						}
@@ -111,14 +113,74 @@
 							"file": {}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sortBy=deadline",
-							"protocol": "http",
+							"raw": "{{base_url}}/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2025-12-31&sortBy=deadline",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
+								"projects"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "I%20lost%20track%20of%20time"
+								},
+								{
+									"key": "from",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2025-12-31"
+								},
+								{
+									"key": "sortBy",
+									"value": "deadline"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Project",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "file",
+							"file": {}
+						},
+						"url": {
+							"raw": "{{base_url}}/projects?name=I%20lost%20track%20of%20time&from=2024-01-01&to=2026-12-31&sort_by=deadline&id={{project_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
 								"projects"
 							],
 							"query": [
@@ -135,8 +197,12 @@
 									"value": "2026-12-31"
 								},
 								{
-									"key": "sortBy",
+									"key": "sort_by",
 									"value": "deadline"
+								},
+								{
+									"key": "id",
+									"value": "{{project_id}}"
 								}
 							]
 						}
@@ -164,7 +230,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -202,14 +269,11 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/tasks/{{task_id}}/timers/stop",
-							"protocol": "http",
+							"raw": "{{base_url}}/tasks/{{task_id}}/timers/stop",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"tasks",
 								"{{task_id}}",
 								"timers",
@@ -235,7 +299,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -273,14 +338,11 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/tasks/{{task_id}}/timers/start",
-							"protocol": "http",
+							"raw": "{{base_url}}/tasks/{{task_id}}/timers/start",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"tasks",
 								"{{task_id}}",
 								"timers",
@@ -324,14 +386,11 @@
 							"file": {}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/tasks/{{task_id}}/timers?active=false&started_at=2024-01-01&stopped_at=2026-12-31",
-							"protocol": "http",
+							"raw": "{{base_url}}/tasks/{{task_id}}/timers?active=false&started_at=2024-01-01&stopped_at=2026-12-31",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"tasks",
 								"{{task_id}}",
 								"timers"
@@ -369,7 +428,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
@@ -387,7 +447,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -425,14 +486,11 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects/{{project_id}}/tasks",
-							"protocol": "http",
+							"raw": "{{base_url}}/projects/{{project_id}}/tasks",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"projects",
 								"{{project_id}}",
 								"tasks"
@@ -468,14 +526,11 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:8000/api/projects/{{project_id}}/tasks?title=euclidean&from=2024-01-01&to=2026-12-31&sort_by=due_at&order=asc",
-							"protocol": "http",
+							"raw": "{{base_url}}/projects/{{project_id}}/tasks?title=euclidean&from=2024-01-01&to=2026-12-31&sort_by=due_at&order=asc",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"projects",
 								"{{project_id}}",
 								"tasks"
@@ -521,7 +576,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
@@ -537,7 +593,8 @@
 									""
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -575,14 +632,11 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:8000/api/projects/{{project_id}}/goals",
-							"protocol": "http",
+							"raw": "{{base_url}}/projects/{{project_id}}/goals",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"projects",
 								"{{project_id}}",
 								"goals"
@@ -592,7 +646,7 @@
 					"response": []
 				},
 				{
-					"name": "Goals",
+					"name": "Goal Collection",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -618,14 +672,11 @@
 							}
 						],
 						"url": {
-							"raw": "http://localhost:8000/api/projects/{{project_id}}/goals?status=active&deadline=2025-12-31",
-							"protocol": "http",
+							"raw": "{{base_url}}/projects/{{project_id}}/goals?status=active&deadline=2025-12-31",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "8000",
 							"path": [
-								"api",
 								"projects",
 								"{{project_id}}",
 								"goals"
@@ -643,74 +694,135 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Goal Collection Filtered",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/projects/{{project_id}}/goals?status=active&deadline=2025-12-31&id={{goal_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"projects",
+								"{{project_id}}",
+								"goals"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "active"
+								},
+								{
+									"key": "deadline",
+									"value": "2025-12-31"
+								},
+								{
+									"key": "id",
+									"value": "{{goal_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
 				}
 			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					"pm.sendRequest({\r",
+					"    url: pm.variables.get(\"base_url\") + \"/login\",\r",
+					"    method: \"POST\",\r",
+					"    header: { \"Content-Type\": \"application/json\" },\r",
+					"    body: {\r",
+					"        mode: \"raw\",\r",
+					"        raw: JSON.stringify({\r",
+					"            email: \"daniel@chronotrack.com\",\r",
+					"            password: \"password123\"\r",
+					"        })\r",
+					"    }\r",
+					"}, (err, res) => {\r",
+					"    if (!err) {\r",
+					"        let json = res.json();\r",
+					"        pm.collectionVariables.set(\"authToken\", json.token);\r",
+					"    }\r",
+					"});\r",
+					""
+				]
+			}
 		},
 		{
-			"name": "Login",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"const json = pm.response.json();\r",
-							"\r",
-							"if (json.access_token) {\r",
-							"    pm.environment.set(\"access_token\", json.access_token);\r",
-							"    console.log(\"Access token set:\", json.access_token);\r",
-							"} else {\r",
-							"    console.warn(\"No access token found in response.\");\r",
-							"}"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Accept",
-						"value": "application/json",
-						"type": "text"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"email\": \"daniel@chronotrack.com\",\r\n  \"password\": \"password123\"\r\n}\r\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8000/api/login",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"login"
-					]
-				}
-			},
-			"response": []
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"variable": [
 		{
 			"key": "task_id",
-			"value": "",
-			"type": "default"
+			"value": ""
+		},
+		{
+			"key": "base_url",
+			"value": ""
+		},
+		{
+			"key": "authToken",
+			"value": ""
 		}
 	]
 }
