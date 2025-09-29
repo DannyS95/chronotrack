@@ -27,7 +27,7 @@ final class TimerService
                 throw new NotOwnerOfTask();
             }
 
-            $active = $this->timers->findActiveForUserLock($user_id, $task->id);
+            $active = $this->timers->findActiveForUserLock($task->id);
             if ($active) {
                 throw new ActiveTimerExists((string) $active->id);
             }

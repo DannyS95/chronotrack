@@ -23,6 +23,7 @@ final class Task extends BaseModel
         'description',
         'due_at',
         'last_activity_at',
+        'status',
     ];
 
     protected $keyType = 'string';
@@ -53,6 +54,7 @@ final class Task extends BaseModel
             'title'           => 'like',
             'description'     => 'like',
             'priority'        => 'equals',
+            'status'          => 'equals',
 
             // Due date filters
             'due_from'        => 'after.due_at',

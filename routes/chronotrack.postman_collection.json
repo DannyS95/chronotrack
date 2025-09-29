@@ -750,10 +750,23 @@
 					"response": []
 				},
 				{
-					"name": "New Request",
+					"name": "Goal Progress",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/projects/{{project_id}}/goals/{{goal_id}}/progress",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"projects",
+								"{{project_id}}",
+								"goals",
+								"{{goal_id}}",
+								"progress"
+							]
+						}
 					},
 					"response": []
 				}

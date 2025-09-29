@@ -13,6 +13,7 @@ use App\Application\Goals\Services\CreateGoalService;
 use App\Application\Goals\Services\DetachTaskFromGoalService;
 use App\Application\Goals\Services\ListGoalsService;
 use App\Application\Goals\Services\ShowGoalService;
+use App\Application\Goals\Services\GoalProgressService;
 use App\Interface\Http\Controllers\Controller;
 use App\Interface\Http\Requests\Goals\GoalFilterRequest;
 use App\Interface\Http\Requests\Goals\StoreGoalRequest;
@@ -27,6 +28,7 @@ final class GoalController extends Controller
         private AttachTaskToGoalService $attachService,
         private DetachTaskFromGoalService $detachService,
         private readonly ShowGoalService $showGoalService,
+        private readonly GoalProgressService $goalProgressService,
     ) {}
 
     /**
@@ -99,5 +101,15 @@ final class GoalController extends Controller
         $this->detachService->handle($dto);
 
         return response()->json(['message' => 'Task detached from goal.']);
+    }
+
+    public function progress(Project $project, Goal $goal): JsonResponse
+    {
+        /** @var \Illuminate\Contracts\Auth\Guard $auth */
+        $auth = auth();
+
+        $payload = $this->goalProgressService->handle($project, $goal, (string) $auth->id());
+
+        return response()->json($payload);
     }
 }

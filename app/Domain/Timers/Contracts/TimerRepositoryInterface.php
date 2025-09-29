@@ -8,7 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface TimerRepositoryInterface
 {
-    public function findActiveForUserLock(string $userId, string $task_id): ?Timer;
+    public function findActiveForUserLock(string $taskId): ?Timer;
 
     public function createRunning(string $taskId): Timer;
 

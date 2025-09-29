@@ -22,6 +22,7 @@ class TaskFactory extends Factory
             'id' => Str::uuid(),
             'project_id' => Project::factory(),
             'title' => $this->faker->sentence,
+            'status' => 'active',
         ];
     }
 }

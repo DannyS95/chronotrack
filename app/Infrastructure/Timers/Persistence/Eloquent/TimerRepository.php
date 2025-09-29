@@ -9,7 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class TimerRepository implements TimerRepositoryInterface
 {
-    public function findActiveForUserLock(string $user_id, string $task_id): ?Timer
+    public function findActiveForUserLock(string $task_id): ?Timer
     {
         return Timer::query()
             ->where('task_id', $task_id)

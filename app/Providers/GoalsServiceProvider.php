@@ -17,6 +17,17 @@ class GoalsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Route::model('goal', Goal::class);
+        Route::bind('goal', function (string $value) {
+            /** @var \Illuminate\Contracts\Auth\Guard $auth */
+            $auth = auth();
+            $projectParam = request()->route('project');
+            $projectId = is_object($projectParam) ? $projectParam->id : $projectParam;
+
+            return Goal::query()
+                ->where('id', $value)
+                ->when($projectId, fn($query) => $query->where('project_id', $projectId))
+                ->whereHas('project', fn($query) => $query->where('user_id', $auth->id()))
+                ->firstOrFail();
+        });
     }
 }

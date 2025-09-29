@@ -4,6 +4,7 @@ namespace App\Domain\Tasks\Contracts;
 
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 interface TaskRepositoryInterface
 {
@@ -16,4 +17,6 @@ interface TaskRepositoryInterface
     public function findOwned(string $taskId, string $projectId, string $userId): Task;
 
     public function updateGoal(Task $task, ?string $goalId): void;
+
+    public function getByGoal(string $goalId, string $projectId, string $userId): Collection;
 }

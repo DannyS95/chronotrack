@@ -17,6 +17,7 @@ Status overview:
 - Tasks: ✅ create, ✅ list, ☐ edit/delete, ☐ status workflow
 - Timers: ✅ start, ✅ stop, ✅ list, ☐ guard against parallel timers
 - Goals: ☐ create, ☐ list, ☐ attach tasks (1:N), ☐ mark complete, ☐ progress UI
+  - Progress API now exposes goal completion % plus task list at `GET /projects/{project}/goals/{goal}/progress`
 - Reports: ☐ aggregation, ☐ billing splits, ☐ exports
 - User system: ✅ register/login/me/logout, ☐ full ownership enforcement
 

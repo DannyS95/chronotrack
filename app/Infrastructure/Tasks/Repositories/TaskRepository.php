@@ -3,9 +3,11 @@
 namespace App\Infrastructure\Tasks\Repositories;
 
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
+use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 final class TaskRepository implements TaskRepositoryInterface
 {
@@ -50,5 +52,17 @@ final class TaskRepository implements TaskRepositoryInterface
     {
         $task->goal_id = $goalId;
         $task->save();
+    }
+
+    public function getByGoal(string $goalId, string $projectId, string $userId): Collection
+    {
+        $goal = Goal::query()
+            ->where('id', $goalId)
+            ->where('project_id', $projectId)
+            ->whereHas('project', fn($q) => $q->where('user_id', $userId))
+            ->with(['tasks' => fn($q) => $q->select('id', 'title', 'status', 'goal_id', 'project_id')->orderBy('created_at')])
+            ->firstOrFail();
+
+        return $goal->tasks;
     }
 }

@@ -33,4 +33,16 @@ class GoalRepository implements GoalRepositoryInterface
             ->where('projects.user_id', $userId)
             ->firstOrFail();
     }
+
+    public function updateStatus(string $goalId, string $status, ?string $completedAt = null): Goal
+    {
+        Goal::query()
+            ->where('id', $goalId)
+            ->update([
+                'status'       => $status,
+                'completed_at' => $completedAt,
+            ]);
+
+        return Goal::query()->findOrFail($goalId);
+    }
 }

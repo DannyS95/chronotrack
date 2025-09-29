@@ -13,4 +13,6 @@ interface GoalRepositoryInterface
     public function list(array $filters, Project $project): Collection;
 
     public function findOwned(string $goalId, string $projectId, string $userId): Goal;
+
+    public function updateStatus(string $goalId, string $status, ?string $completedAt = null): Goal;
 }

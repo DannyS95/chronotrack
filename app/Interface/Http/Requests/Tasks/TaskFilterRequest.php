@@ -15,11 +15,12 @@ final class TaskFilterRequest extends FormRequest
     {
         return [
             'title'     => ['nullable', 'string'],
+            'status'    => ['nullable', 'in:active,done'],
             'from'      => ['nullable', 'date'],
             'to'        => ['nullable', 'date'],
             'sort_by'   => ['nullable', 'in:due_at,last_activity_at,created_at'],
             'order'     => ['nullable', 'in:asc,desc'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'per_page'  => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

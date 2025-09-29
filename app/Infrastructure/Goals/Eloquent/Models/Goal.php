@@ -2,10 +2,12 @@
 
 namespace App\Infrastructure\Goals\Eloquent\Models;
 
+use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 final class Goal extends BaseModel
@@ -44,6 +46,11 @@ final class Goal extends BaseModel
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class, 'goal_id');
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class, 'project_id');
     }
 
 
