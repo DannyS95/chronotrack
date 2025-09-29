@@ -11,4 +11,6 @@ interface GoalRepositoryInterface
     public function create(array $data): Goal;
 
     public function list(array $filters, Project $project): Collection;
+
+    public function findOwned(string $goalId, string $projectId, string $userId): Goal;
 }

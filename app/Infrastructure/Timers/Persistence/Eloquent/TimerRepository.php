@@ -12,18 +12,14 @@ final class TimerRepository implements TimerRepositoryInterface
     public function findActiveForUserLock(string $user_id, string $task_id): ?Timer
     {
         return Timer::query()
-            ->select('timers.*')
-            ->join('tasks', 'tasks.id', '=', 'timers.task_id')
-            ->join('projects', 'projects.id', '=', 'tasks.project_id')
-            ->whereNull('timers.stopped_at')
-            ->where('projects.user_id', $user_id)
-            ->where('tasks.id', $task_id)   // 🔥 add this line
-            ->latest('timers.started_at')
+            ->where('task_id', $task_id)
+            ->whereNull('stopped_at')
+            ->latest('started_at')
             ->lockForUpdate()
             ->first();
     }
 
-    public function createRunning(string $taskId, int $userId): Timer
+    public function createRunning(string $taskId): Timer
     {
         $timer = new Timer();
         $timer->task_id = $taskId;
@@ -33,16 +29,14 @@ final class TimerRepository implements TimerRepositoryInterface
         return $timer;
     }
 
-    public function stopActiveForUserOnTask(string $taskId, int $userId): ?Timer
+    public function stopActiveForUserOnTask(string $taskId, string $userId): ?Timer
     {
         $row = Timer::query()
-            ->join('tasks', 'tasks.id', '=', 'timers.task_id')
-            ->join('projects', 'projects.id', '=', 'tasks.project_id')
-            ->where('timers.task_id', $taskId)
-            ->where('projects.user_id', $userId)
-            ->whereNull('timers.stopped_at')
+            ->where('task_id', $taskId)
+            ->whereNull('stopped_at')
+            ->latest('started_at')
             ->lockForUpdate()
-            ->first(['timers.*']);
+            ->first();
 
         if (! $row) {
             return null;
@@ -54,7 +48,7 @@ final class TimerRepository implements TimerRepositoryInterface
         return $row;
     }
 
-    public function findActiveWithContext(int $userId): ?Timer
+    public function findActiveWithContext(string $userId): ?Timer
     {
         return Timer::query()
             ->with(['task:id,title,project_id', 'task.project:id,name'])

@@ -27,11 +27,28 @@ final class TaskRepository implements TaskRepositoryInterface
             ->whereHas('project', fn($q) => $q->where('user_id', $user_id));
     }
 
-    public function userOwnsTask(string $taskId, int $userId): bool
+    public function userOwnsTask(string $taskId, string $userId): bool
     {
         return Task::query()
             ->where('id', $taskId)
             ->whereHas('project', fn($q) => $q->where('user_id', $userId))
             ->exists();
+    }
+
+    public function findOwned(string $taskId, string $projectId, string $userId): Task
+    {
+        return Task::query()
+            ->select('tasks.*')
+            ->join('projects', 'tasks.project_id', '=', 'projects.id')
+            ->where('tasks.id', $taskId)
+            ->where('tasks.project_id', $projectId)
+            ->where('projects.user_id', $userId)
+            ->firstOrFail();
+    }
+
+    public function updateGoal(Task $task, ?string $goalId): void
+    {
+        $task->goal_id = $goalId;
+        $task->save();
     }
 }

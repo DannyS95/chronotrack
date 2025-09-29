@@ -5,6 +5,7 @@ namespace App\Application\Goals\Services;
 use App\Application\Goals\DTO\AttachTaskToGoalDTO;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class DetachTaskFromGoalService
 {
@@ -21,7 +22,11 @@ class DetachTaskFromGoalService
         // Verify task ownership
         $task = $this->tasks->findOwned($dto->taskId, $dto->projectId, $dto->userId);
 
-        // Detach
-        $this->goals->detachTask($goal->id, $task->id);
+        if ($task->goal_id !== $goal->id) {
+            throw new AuthorizationException('Task is not attached to the provided goal.');
+        }
+
+        // Detach by clearing task's goal reference
+        $this->tasks->updateGoal($task, null);
     }
 }

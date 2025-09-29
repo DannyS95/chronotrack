@@ -33,9 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-Route::middleware('auth:sanctum')->prefix('projects/{project}')->group(function () {
-    Route::get('goals', [GoalController::class, 'index'])->name('api.projects.goals.index');
-    Route::post('goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
-    Route::post('/projects/{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'attach']);
-    Route::delete('/projects/{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'detach']);
+Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
+    Route::scopeBindings()->group(function () {
+        Route::get('{project}/goals', [GoalController::class, 'index'])->name('api.projects.goals.index');
+        Route::post('{project}/goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
+        Route::get('{project}/goals/{goal}', [GoalController::class, 'show'])->name('api.projects.goals.show');
+        Route::post('{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'attach'])->name('api.projects.goals.tasks.attach');
+        Route::delete('{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'detach'])->name('api.projects.goals.tasks.detach');
+    });
 });

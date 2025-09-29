@@ -10,11 +10,11 @@ interface TimerRepositoryInterface
 {
     public function findActiveForUserLock(string $userId, string $task_id): ?Timer;
 
-    public function createRunning(string $taskId, int $userId): Timer;
+    public function createRunning(string $taskId): Timer;
 
-    public function stopActiveForUserOnTask(string $taskId, int $userId): ?Timer;
+    public function stopActiveForUserOnTask(string $taskId, string $userId): ?Timer;
 
-    public function findActiveWithContext(int $userId): ?Timer;
+    public function findActiveWithContext(string $userId): ?Timer;
 
     public function list(array $filters): LengthAwarePaginator;
 }

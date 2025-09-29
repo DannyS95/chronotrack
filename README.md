@@ -1,96 +1,79 @@
 # ⏱️ ChronoTrack
 
-ChronoTrack is a **project-focused task scheduler + time tracker** built with Laravel, Inertia.js (Vue), and Clean Architecture principles.
+ChronoTrack tracks project work end-to-end: capture projects, break them into tasks, align tasks to goals, and log time against the plan. The scope is simple—ship a laser-focused slice that proves clean architecture can move fast without losing rigor.
 
 ---
 
-## 📦 Tech Stack
+## ⚡ Core Highlights
 
-- **Laravel** — Backend framework (Clean Architecture, DDD patterns)  
-- **Inertia.js** — UI glue between Laravel and Vue  
-- **Vue 3** — Reactive frontend components  
-- **Tailwind CSS** — Utility-first styling  
-- **Pest** — Developer-friendly testing framework  
+- **Project Ops Ready** – Create and list projects scoped to the authenticated user; ownership rules flow through every layer.
+- **Task Execution** – Spin up tasks per project, view task backlogs, and lay the groundwork for richer statuses and editing.
+- **Goal Alignment** – Goals stay project-scoped with a tight 1 goal → many tasks relationship so progress rolls up cleanly.
+- **Timer Discipline** – Start, stop, and review timers per task to connect work logged with the plan in real time.
+- **Consistency Built-In** – Transaction runner + locking strategy keep multi-write workflows safe and prevent duplicate persistence logic from creeping in.
+
+Status overview:
+- Projects: ✅ create, ✅ list, ☐ archive/delete
+- Tasks: ✅ create, ✅ list, ☐ edit/delete, ☐ status workflow
+- Timers: ✅ start, ✅ stop, ✅ list, ☐ guard against parallel timers
+- Goals: ☐ create, ☐ list, ☐ attach tasks (1:N), ☐ mark complete, ☐ progress UI
+- Reports: ☐ aggregation, ☐ billing splits, ☐ exports
+- User system: ✅ register/login/me/logout, ☐ full ownership enforcement
 
 ---
 
-## 🧩 Architecture
+## 🧭 Architecture at a Glance
 
-Organized by Clean Architecture principles:
+Clean Architecture drives the structure. Each layer owns its concerns and the flow is legible from HTTP to persistence.
+
 ```
 /app
     /Domain         # contracts, entities, exceptions
     /Application    # DTOs, services, use cases
-    /Infrastructure # Eloquent models, repositories
+    /Infrastructure # Eloquent models, repositories, adapter layer + transaction runner
     /Interface      # HTTP controllers, requests
 ```
 
-- Clear separation of concerns  
-- Service layer driven by DTOs  
-- Repository interfaces decouple persistence from domain logic  
+- DTO-first service layer contains the business logic.
+- Infrastructure holds the adapters: querying philosophy, consistent repository structure, and the transaction runner that keeps multi-write operations safe while avoiding duplicate logic.
+- Transaction locks and scoped repositories ensure ownership checks and write conflicts are handled deterministically.
+- Repositories hide persistence details behind interfaces.
+- Vertical slices connect route → request → service → repository → model without leaking framework shortcuts across layers.
 
 ---
 
-## ✅ Core Features
+## 🔬 Feature Flow: Goal ↔ Task Linking (WIP)
 
-### 🗂️ Projects
-- [x] Create project  
-- [x] View all projects  
-- [ ] Archive/delete project  
+1. `POST /api/projects/{project}/goals` (coming soon) captures the goal definition under a project.
+2. `POST /api/projects/{project}/goals/{goal}/tasks/{task}` links a task to a goal by setting `tasks.goal_id`.
+3. Attach/Detach services enforce ownership through repository lookups, ensuring one user’s goal cannot claim another user’s task.
+4. Read models surface goal summaries alongside tasks so future reporting can measure progress automatically.
 
-### ✅ Tasks
-- [x] Create task (scoped to project)  
-- [x] View tasks per project  
-- [ ] Edit/delete task  
-- [ ] Task status (To Do, In Progress, Done)  
-
-### ⏱️ Timers
-- [x] Start timer on task  
-- [x] Stop timer  
-- [x] View timers per task  
-- [ ] Prevent multiple active timers per user  
-
-### 🎯 Goals
-- [ ] Create goal (scoped to project)  
-- [ ] List goals per project  
-- [ ] Attach tasks to goals (via pivot)  
-- [ ] Mark goal complete  
-- [ ] Show goal progress  
-
-### 📊 Reports
-- [ ] Aggregate timers by project  
-- [ ] Time per day/week/month  
-- [ ] Billable vs non-billable hours  
-- [ ] Export CSV/JSON  
-
-### 👤 User System
-- [x] Register user  
-- [x] Login user  
-- [x] Authenticated user info (`/me`)  
-- [x] Logout  
-- [ ] Restrict tasks/goals/timers per user (ownership rules)  
-
+📌 **Design note:** Tasks carry a `goal_id`. That simple 1:N keeps lineage clean today and leaves room for future goal-to-goal dependencies.
 
 ---
 
-## 🚧 Status
+## 🛠 Tech Stack
 
-- Current focus: **Goals** (project-scoped create + list).  
-- Next: goal–task linkage, reporting services, and user auth.  
-
----
-
-## 🧠 Philosophy
-
-ChronoTrack is a playground for:  
-- Practicing Clean Architecture in Laravel  
-- Modeling domains with DDD  
-- Building vertical slices (routes → requests → DTOs → services → repos → models)  
-- Exploring time-tracking and reporting design  
+- **Laravel** — Backend foundation with DDD-friendly patterns
+- **Inertia.js** — Bridges Laravel responses to Vue screens
+- **Vue 3** — Reactive UI components
+- **Tailwind CSS** — Utility-first styling
+- **Pest** — Fast, expressive testing
 
 ---
 
-## 🔧 Setup
+## 🧠 Build Philosophy
+
+- Iterate with ownership: every module reflects a deliberate architectural choice.
+- Keep the domain vocabulary explicit; DTOs and services mirror the language of the product.
+- Deliver vertical slices that can be demoed quickly while still being testable end-to-end.
+- Use ChronoTrack as the proving ground for future reporting and operations features.
+- Lean on transaction-scoped services so a single failure never leaves partial data behind.
+
+---
+
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/DannyS95/chronotrack.git
@@ -100,30 +83,42 @@ make install
 make dev
 ```
 
-### ⚠️ Note on Docker
+### ⚠️ Docker Notes
 
-This app uses `artisan serve` inside Docker (`make dev`).  
-Networking quirks may appear depending on Docker Desktop / WSL2 setup.  
-If `http://localhost:8000` doesn’t work:  
-- Try stopping Docker Desktop entirely.  
-- Or change `docker-compose.yml` to map `8080:8000` and use `http://localhost:8080`.  
+`make dev` runs `php artisan serve` inside Docker. If the app isn’t reachable at `http://localhost:8000`:
+- Restart Docker Desktop (common on WSL2).
+- Or remap ports in `docker-compose.yml` to `8080:8000` and visit `http://localhost:8080`.
 
 ---
 
-## 👤 Test User
-
-A seeded test user is available for login:  
+## 👤 Seeded Test User
 
 ```
-Email:    daniel@chronotrack.com  
+Email:    daniel@chronotrack.com
 Password: password123
 ```
 
 ---
 
-## 🎯 Future Goals
+## 📅 Current Focus
 
-- [ ] Real-time timers (WebSockets, ReactPHP)  
-- [ ] Advanced reports (per user, per client, per project)  
-- [ ] Notifications (reminders for deadlines/goals)  
-- [ ] Role-based access (shared projects, team goals)  
+- **Now:** Goal creation, listing, and task linkage scoped by project + user.
+- **Next:** Ownership enforcement everywhere, richer reports, and expanded auth flows.
+
+---
+
+## 🔭 Roadmap
+
+### Goal Evolution
+- Keep the 1:N goal→task relationship.
+- Introduce goal-to-goal dependencies (depends on, subgoal, unlocks) when sequencing becomes necessary.
+- Proposed schema: `goal_links(goal_id, linked_goal_id, type)`.
+
+### Broader Backlog
+- ☐ Real-time timers (WebSockets, ReactPHP)
+- ☐ Advanced reports (per user, client, project)
+- ☐ Notifications (deadline reminders, goal nudges)
+- ☐ Role-based access for shared projects and teams
+
+
+ChronoTrack keeps expanding. Every commit tightens the feedback loop between planning goals, executing tasks, and understanding where the time went.

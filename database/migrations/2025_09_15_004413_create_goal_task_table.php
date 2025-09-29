@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('goal_task', function (Blueprint $table) {
-            $table->uuid('goal_id');
-            $table->uuid('task_id');
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->uuid('goal_id')->nullable()->after('project_id');
 
-            $table->foreign('goal_id')->references('id')->on('goals')->cascadeOnDelete();
-            $table->foreign('task_id')->references('id')->on('tasks')->cascadeOnDelete();
+            $table->foreign('goal_id')
+                ->references('id')
+                ->on('goals')
+                ->nullOnDelete();
 
-            $table->primary(['goal_id', 'task_id']);
-
+            $table->index('goal_id');
         });
     }
 
@@ -28,6 +28,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('goal_task');
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->dropForeign(['goal_id']);
+            $table->dropColumn('goal_id');
+        });
     }
 };

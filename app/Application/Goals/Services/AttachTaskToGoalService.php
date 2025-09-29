@@ -21,7 +21,11 @@ class AttachTaskToGoalService
         // Verify task ownership
         $task = $this->tasks->findOwned($dto->taskId, $dto->projectId, $dto->userId);
 
-        // Attach
-        $this->goals->attachTask($goal->id, $task->id);
+        if ($task->goal_id === $goal->id) {
+            return;
+        }
+
+        // Attach by setting task's goal reference
+        $this->tasks->updateGoal($task, $goal->id);
     }
 }

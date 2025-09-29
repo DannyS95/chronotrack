@@ -2,9 +2,11 @@
 
 namespace App\Infrastructure\Tasks\Eloquent\Models;
 
+use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Task extends BaseModel
@@ -16,6 +18,7 @@ final class Task extends BaseModel
     protected $fillable = [
         'id',
         'project_id',
+        'goal_id',
         'title',
         'description',
         'due_at',
@@ -25,11 +28,19 @@ final class Task extends BaseModel
     protected $keyType = 'string';
     public $incrementing = false;
 
-    public function project()
+    public function project(): BelongsTo
     {
         return $this->belongsTo(
             Project::class,
             'project_id'
+        );
+    }
+
+    public function goal(): BelongsTo
+    {
+        return $this->belongsTo(
+            Goal::class,
+            'goal_id'
         );
     }
 
@@ -38,6 +49,7 @@ final class Task extends BaseModel
         return [
             'id'              => 'equals',
             'project_id'      => 'equals',
+            'goal_id'         => 'equals',
             'title'           => 'like',
             'description'     => 'like',
             'priority'        => 'equals',
