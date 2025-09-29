@@ -2,6 +2,7 @@
 
 namespace App\Domain\Goals\Contracts;
 
+use App\Domain\Goals\ValueObjects\GoalSnapshot;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use Illuminate\Support\Collection;
@@ -14,5 +15,7 @@ interface GoalRepositoryInterface
 
     public function findOwned(string $goalId, string $projectId, string $userId): Goal;
 
-    public function updateStatus(string $goalId, string $status, ?string $completedAt = null): Goal;
+    public function findSnapshot(string $goalId, string $projectId, string $userId): GoalSnapshot;
+
+    public function updateStatusSnapshot(string $goalId, string $status, ?string $completedAt = null): GoalSnapshot;
 }

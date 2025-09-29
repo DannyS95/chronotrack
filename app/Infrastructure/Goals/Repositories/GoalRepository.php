@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Goals\Repositories;
 
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
+use App\Domain\Goals\ValueObjects\GoalSnapshot;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use Illuminate\Support\Collection;
@@ -34,7 +35,14 @@ class GoalRepository implements GoalRepositoryInterface
             ->firstOrFail();
     }
 
-    public function updateStatus(string $goalId, string $status, ?string $completedAt = null): Goal
+    public function findSnapshot(string $goalId, string $projectId, string $userId): GoalSnapshot
+    {
+        $goal = $this->findOwned($goalId, $projectId, $userId);
+
+        return GoalSnapshot::fromModel($goal);
+    }
+
+    public function updateStatusSnapshot(string $goalId, string $status, ?string $completedAt = null): GoalSnapshot
     {
         Goal::query()
             ->where('id', $goalId)
@@ -43,6 +51,8 @@ class GoalRepository implements GoalRepositoryInterface
                 'completed_at' => $completedAt,
             ]);
 
-        return Goal::query()->findOrFail($goalId);
+        $goal = Goal::query()->findOrFail($goalId);
+
+        return GoalSnapshot::fromModel($goal);
     }
 }

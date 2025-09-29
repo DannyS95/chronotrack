@@ -2,6 +2,7 @@
 
 namespace App\Domain\Tasks\Contracts;
 
+use App\Domain\Tasks\ValueObjects\TaskSnapshot;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -18,5 +19,6 @@ interface TaskRepositoryInterface
 
     public function updateGoal(Task $task, ?string $goalId): void;
 
-    public function getByGoal(string $goalId, string $projectId, string $userId): Collection;
+    /** @return Collection<int, TaskSnapshot> */
+    public function getSnapshotsByGoal(string $goalId, string $projectId, string $userId): Collection;
 }

@@ -2,10 +2,9 @@
 
 namespace App\Application\Goals\Services;
 
+use App\Application\Goals\ViewModels\GoalProgressViewModel;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
-use App\Infrastructure\Goals\Eloquent\Models\Goal;
-use App\Infrastructure\Projects\Eloquent\Models\Project;
 
 final class GoalProgressService
 {
@@ -14,32 +13,21 @@ final class GoalProgressService
         private readonly TaskRepositoryInterface $tasks,
     ) {}
 
-    public function handle(Project $project, Goal $goal, string $userId): array
+    public function handle(string $projectId, string $goalId, string $userId): GoalProgressViewModel
     {
-        $ownedGoal = $this->goals->findOwned($goal->id, $project->id, $userId);
+        $goalSnapshot = $this->goals->findSnapshot($goalId, $projectId, $userId);
+        $taskSnapshots = $this->tasks->getSnapshotsByGoal($goalSnapshot->id, $projectId, $userId);
 
-        $tasks = $this->tasks->getByGoal($ownedGoal->id, $project->id, $userId);
+        $viewModel = GoalProgressViewModel::fromSnapshots($goalSnapshot, $taskSnapshots);
 
-        $totalTasks = $tasks->count();
-        $completedTasks = $tasks->where('status', 'done')->count();
-        $percent = $totalTasks > 0
-            ? (int) round(($completedTasks / $totalTasks) * 100)
-            : 0;
+        $allComplete = $viewModel->totalTasks() > 0
+            && $viewModel->completedTasks() === $viewModel->totalTasks();
 
-        if ($totalTasks > 0 && $completedTasks === $totalTasks && $ownedGoal->status !== 'complete') {
-            $ownedGoal = $this->goals->updateStatus($ownedGoal->id, 'complete', now());
+        if ($allComplete && ! $goalSnapshot->isComplete()) {
+            $goalSnapshot = $this->goals->updateStatusSnapshot($goalSnapshot->id, 'complete', now());
+            $viewModel = $viewModel->withCompletionUpdated($goalSnapshot);
         }
 
-        return [
-            'goal_id'          => $ownedGoal->id,
-            'total_tasks'      => $totalTasks,
-            'completed_tasks'  => $completedTasks,
-            'percent_complete' => $percent,
-            'tasks'            => $tasks->map(fn($task) => [
-                'id'     => $task->id,
-                'title'  => $task->title,
-                'status' => $task->status,
-            ])->values()->all(),
-        ];
+        return $viewModel;
     }
 }

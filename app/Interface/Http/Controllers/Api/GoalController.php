@@ -108,8 +108,12 @@ final class GoalController extends Controller
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
-        $payload = $this->goalProgressService->handle($project, $goal, (string) $auth->id());
+        $viewModel = $this->goalProgressService->handle(
+            $project->id,
+            $goal->id,
+            (string) $auth->id(),
+        );
 
-        return response()->json($payload);
+        return response()->json($viewModel->toArray());
     }
 }
