@@ -3,6 +3,7 @@
 namespace App\Application\Tasks\Services;
 
 use App\Application\Tasks\DTO\CreateTaskDTO;
+use App\Application\Tasks\ViewModels\TaskViewModel;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 
 final class CreateTaskService
@@ -11,8 +12,10 @@ final class CreateTaskService
         private TaskRepositoryInterface $taskRepository
     ) {}
 
-    public function handle(CreateTaskDTO $dto): mixed
+    public function handle(CreateTaskDTO $dto): TaskViewModel
     {
-        return $this->taskRepository->create($dto->toArray());
+        $snapshot = $this->taskRepository->createSnapshot($dto->toArray());
+
+        return TaskViewModel::fromSnapshot($snapshot);
     }
 }

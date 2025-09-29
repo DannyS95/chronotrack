@@ -7,27 +7,33 @@ use App\Domain\Tasks\ValueObjects\TaskSnapshot;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 final class TaskRepository implements TaskRepositoryInterface
 {
-    public function create(array $data): Task
+    public function createSnapshot(array $data): TaskSnapshot
     {
-        return Task::create($data);
+        $task = Task::create($data);
+
+        return TaskSnapshot::fromModel($task->fresh());
     }
 
-    public function getFiltered(array $filters, string $user_id, string $project_id): Builder
+    public function paginateSnapshots(array $filters, string $userId, string $projectId, int $perPage): LengthAwarePaginator
     {
-        // Ensure the project exists and belongs to the user
         $project = Project::query()
-            ->where('id', $project_id)
-            ->where('user_id', $user_id)
+            ->where('id', $projectId)
+            ->where('user_id', $userId)
             ->firstOrFail();
 
-        return Task::applyFilters($filters)
+        $paginator = Task::applyFilters($filters)
             ->where('project_id', $project->id)
-            ->whereHas('project', fn($q) => $q->where('user_id', $user_id));
+            ->whereHas('project', fn($q) => $q->where('user_id', $userId))
+            ->paginate($perPage);
+
+        $paginator->getCollection()->transform(fn(Task $task) => TaskSnapshot::fromModel($task));
+
+        return $paginator;
     }
 
     public function userOwnsTask(string $taskId, string $userId): bool
@@ -61,7 +67,7 @@ final class TaskRepository implements TaskRepositoryInterface
             ->where('id', $goalId)
             ->where('project_id', $projectId)
             ->whereHas('project', fn($q) => $q->where('user_id', $userId))
-            ->with(['tasks' => fn($q) => $q->select('id', 'title', 'status', 'goal_id', 'project_id')->orderBy('created_at')])
+            ->with(['tasks' => fn($q) => $q->select('id', 'title', 'description', 'status', 'goal_id', 'project_id', 'due_at', 'last_activity_at', 'created_at', 'updated_at')->orderBy('created_at')])
             ->firstOrFail();
 
         return $goal->tasks

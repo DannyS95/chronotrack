@@ -3,11 +3,8 @@
 namespace App\Application\Tasks\Services;
 
 use App\Application\Tasks\DTO\TaskFilterDTO;
+use App\Application\Tasks\ViewModels\TaskCollectionViewModel;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
-use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
-use App\Infrastructure\Tasks\Eloquent\Models\Task;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
 
 final class ListTasksService
 {
@@ -15,16 +12,15 @@ final class ListTasksService
         private TaskRepositoryInterface $taskRepository
     ) {}
 
-    /**
-     * Handle the task listing with filters.
-     *
-     * @return LengthAwarePaginator<Task>
-     */
-    public function handle(TaskFilterDTO $dto): LengthAwarePaginator
+    public function handle(TaskFilterDTO $dto): TaskCollectionViewModel
     {
-        /** @var Builder<Task> $query */
-        $query = $this->taskRepository->getFiltered($dto->toArray(), $dto->user_id, $dto->project_id);
+        $paginator = $this->taskRepository->paginateSnapshots(
+            $dto->toArray(),
+            $dto->user_id,
+            $dto->project_id,
+            $dto->per_page,
+        );
 
-        return $query->paginate($dto->per_page);
+        return TaskCollectionViewModel::fromPaginator($paginator);
     }
 }

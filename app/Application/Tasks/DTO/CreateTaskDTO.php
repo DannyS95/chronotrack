@@ -9,7 +9,7 @@ final class CreateTaskDTO
         public string $title,
         public ?string $description,
         public ?string $due_at,
-        public int $user_id
+        public string $user_id
     ) {}
 
     public function toArray(): array
