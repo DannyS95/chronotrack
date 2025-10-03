@@ -5,6 +5,7 @@ namespace App\Application\Goals\Services;
 use App\Application\Goals\DTO\AttachTaskToGoalDTO;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
+use Illuminate\Validation\ValidationException;
 
 class AttachTaskToGoalService
 {
@@ -22,7 +23,9 @@ class AttachTaskToGoalService
         $task = $this->tasks->findOwned($dto->taskId, $dto->projectId, $dto->userId);
 
         if ($task->goal_id === $goal->id) {
-            return;
+            throw ValidationException::withMessages([
+                'task_id' => ['Task is already attached to this goal.'],
+            ]);
         }
 
         // Attach by setting task's goal reference
