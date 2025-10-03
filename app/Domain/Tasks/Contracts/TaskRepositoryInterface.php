@@ -21,4 +21,9 @@ interface TaskRepositoryInterface
 
     /** @return Collection<int, TaskSnapshot> */
     public function getSnapshotsByGoal(string $goalId, string $projectId, string $userId): Collection;
+
+    /** @param array<string, mixed> $attributes */
+    public function updateSnapshot(Task $task, array $attributes): TaskSnapshot;
+
+    public function delete(Task $task): void;
 }

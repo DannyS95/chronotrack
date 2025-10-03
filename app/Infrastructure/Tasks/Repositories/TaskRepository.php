@@ -27,8 +27,7 @@ final class TaskRepository implements TaskRepositoryInterface
             ->firstOrFail();
 
         $paginator = Task::applyFilters($filters)
-            ->where('project_id', $project->id)
-            ->whereHas('project', fn($q) => $q->where('user_id', $userId))
+            ->ownedBy($project->id, $userId)
             ->paginate($perPage);
 
         $paginator->getCollection()->transform(fn(Task $task) => TaskSnapshot::fromModel($task));
@@ -39,19 +38,16 @@ final class TaskRepository implements TaskRepositoryInterface
     public function userOwnsTask(string $taskId, string $userId): bool
     {
         return Task::query()
-            ->where('id', $taskId)
-            ->whereHas('project', fn($q) => $q->where('user_id', $userId))
+            ->ownedByUser($userId)
+            ->whereKey($taskId)
             ->exists();
     }
 
     public function findOwned(string $taskId, string $projectId, string $userId): Task
     {
         return Task::query()
-            ->select('tasks.*')
-            ->join('projects', 'tasks.project_id', '=', 'projects.id')
-            ->where('tasks.id', $taskId)
-            ->where('tasks.project_id', $projectId)
-            ->where('projects.user_id', $userId)
+            ->ownedBy($projectId, $userId)
+            ->whereKey($taskId)
             ->firstOrFail();
     }
 
@@ -61,12 +57,24 @@ final class TaskRepository implements TaskRepositoryInterface
         $task->save();
     }
 
+    public function updateSnapshot(Task $task, array $attributes): TaskSnapshot
+    {
+        $task->fill($attributes);
+        $task->save();
+
+        return TaskSnapshot::fromModel($task->fresh());
+    }
+
+    public function delete(Task $task): void
+    {
+        $task->delete();
+    }
+
     public function getSnapshotsByGoal(string $goalId, string $projectId, string $userId): Collection
     {
         $goal = Goal::query()
-            ->where('id', $goalId)
-            ->where('project_id', $projectId)
-            ->whereHas('project', fn($q) => $q->where('user_id', $userId))
+            ->ownedBy($projectId, $userId)
+            ->whereKey($goalId)
             ->with(['tasks' => fn($q) => $q->select('id', 'title', 'description', 'status', 'goal_id', 'project_id', 'due_at', 'last_activity_at', 'created_at', 'updated_at')->orderBy('created_at')])
             ->firstOrFail();
 

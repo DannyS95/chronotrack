@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Goals\Eloquent\Models;
 
 use App\Infrastructure\Projects\Eloquent\Models\Project;
+use App\Infrastructure\Shared\Persistence\Eloquent\Concerns\FiltersByProjectOwnership;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 final class Goal extends BaseModel
 {
     use HasFactory;
+    use FiltersByProjectOwnership;
 
     protected $table = 'goals';
 

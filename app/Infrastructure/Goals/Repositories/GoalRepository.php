@@ -27,11 +27,8 @@ class GoalRepository implements GoalRepositoryInterface
     public function findOwned(string $goalId, string $projectId, string $userId): Goal
     {
         return Goal::query()
-            ->select('goals.*')
-            ->join('projects', 'goals.project_id', '=', 'projects.id')
-            ->where('goals.id', $goalId)
-            ->where('goals.project_id', $projectId)
-            ->where('projects.user_id', $userId)
+            ->ownedBy($projectId, $userId)
+            ->whereKey($goalId)
             ->firstOrFail();
     }
 

@@ -4,6 +4,7 @@ namespace App\Infrastructure\Tasks\Eloquent\Models;
 
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
+use App\Infrastructure\Shared\Persistence\Eloquent\Concerns\FiltersByProjectOwnership;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Task extends BaseModel
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
+    use FiltersByProjectOwnership;
 
     protected $table = 'tasks';
 
