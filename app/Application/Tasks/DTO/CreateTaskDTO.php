@@ -22,4 +22,15 @@ final class CreateTaskDTO
             'user_id' => $this->user_id,
         ];
     }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            project_id: $attributes['project_id'],
+            title: $attributes['title'],
+            description: $attributes['description'] ?? null,
+            due_at: $attributes['due_at'] ?? null,
+            user_id: $attributes['user_id'],
+        );
+    }
 }

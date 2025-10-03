@@ -31,4 +31,18 @@ class TimerFilterDTO
             'active'      => $this->active,
         ];
     }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            id: $attributes['id'] ?? null,
+            taskId: $attributes['task_id'] ?? null,
+            startedAfter: $attributes['started_after'] ?? null,
+            startedBefore: $attributes['started_before'] ?? null,
+            stoppedAfter: $attributes['stopped_after'] ?? null,
+            stoppedBefore: $attributes['stopped_before'] ?? null,
+            active: $attributes['active'] ?? null,
+            userId: $attributes['userId'] ?? ($attributes['user_id'] ?? null),
+        );
+    }
 }

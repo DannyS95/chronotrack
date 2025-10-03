@@ -43,7 +43,7 @@ final class TimerService
                 throw new NotOwnerOfTask();
             }
 
-            $stopped = $this->timers->stopActiveForUserOnTask($task->id, $userId);
+            $stopped = $this->timers->stopActiveTimerForTask($task->id);
             if (! $stopped) {
                 throw new NoActiveTimerOnTask();
             }

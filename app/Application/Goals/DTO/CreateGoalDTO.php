@@ -24,5 +24,16 @@ class CreateGoalDTO
             'user_id'     => $this->user_id,
         ];
     }
-}
 
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            title: $attributes['title'],
+            description: $attributes['description'] ?? null,
+            deadline: $attributes['deadline'] ?? null,
+            status: $attributes['status'] ?? 'active',
+            project_id: $attributes['project_id'],
+            user_id: $attributes['user_id'],
+        );
+    }
+}

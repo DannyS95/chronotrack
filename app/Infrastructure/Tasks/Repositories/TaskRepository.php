@@ -28,6 +28,7 @@ final class TaskRepository implements TaskRepositoryInterface
 
         return Task::applyFilters($filters)
             ->ownedBy($project->id, $userId)
+            ->with('timers')
             ->paginate($perPage)
             ->through(fn(Task $task) => TaskSnapshot::fromModel($task));
     }
@@ -72,7 +73,11 @@ final class TaskRepository implements TaskRepositoryInterface
         $goal = Goal::query()
             ->ownedBy($projectId, $userId)
             ->whereKey($goalId)
-            ->with(['tasks' => fn($q) => $q->select('id', 'title', 'description', 'status', 'goal_id', 'project_id', 'due_at', 'last_activity_at', 'created_at', 'updated_at')->orderBy('created_at')])
+            ->with(['tasks' => fn($q) => $q
+                ->select('id', 'title', 'description', 'status', 'goal_id', 'project_id', 'due_at', 'last_activity_at', 'created_at', 'updated_at')
+                ->with('timers')
+                ->orderBy('created_at')
+            ])
             ->firstOrFail();
 
         return $goal->tasks
@@ -85,6 +90,7 @@ final class TaskRepository implements TaskRepositoryInterface
         return Task::query()
             ->ownedBy($projectId, $userId)
             ->where('goal_id', $goalId)
+            ->with('timers')
             ->get();
     }
 

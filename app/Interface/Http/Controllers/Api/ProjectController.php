@@ -18,7 +18,7 @@ class ProjectController extends Controller
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
-         $dto = new CreateProjectDTO(...[
+        $dto = CreateProjectDTO::fromArray([
             ...$request->validated(),
             'user_id' => $auth->id(),
         ]);
@@ -36,7 +36,7 @@ class ProjectController extends Controller
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
         
-        $dto = new ProjectFilterDTO(...[
+        $dto = ProjectFilterDTO::fromArray([
             ...$request->validated(),
             'user_id' => $auth->id(),
         ]);

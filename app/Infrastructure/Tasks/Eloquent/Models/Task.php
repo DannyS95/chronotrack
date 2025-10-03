@@ -6,8 +6,10 @@ use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Shared\Persistence\Eloquent\Concerns\FiltersByProjectOwnership;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
+use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Task extends BaseModel
@@ -46,6 +48,11 @@ final class Task extends BaseModel
             Goal::class,
             'goal_id'
         );
+    }
+
+    public function timers(): HasMany
+    {
+        return $this->hasMany(Timer::class, 'task_id');
     }
 
     public static function filters(): array

@@ -5,6 +5,7 @@ namespace App\Infrastructure\Timers\Persistence\Eloquent;
 use App\Application\Timers\DTO\TimerFilterDTO;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
+use Illuminate\Support\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class TimerRepository implements TimerRepositoryInterface
@@ -29,7 +30,7 @@ final class TimerRepository implements TimerRepositoryInterface
         return $timer;
     }
 
-    public function stopActiveForUserOnTask(string $taskId, string $userId): ?Timer
+    public function stopActiveTimerForTask(string $taskId): ?Timer
     {
         $row = Timer::query()
             ->where('task_id', $taskId)
@@ -42,24 +43,43 @@ final class TimerRepository implements TimerRepositoryInterface
             return null;
         }
 
-        $row->stopped_at = now();
+        $now = Carbon::now();
+
+        $row->stopped_at = $now;
+        $row->duration = $row->started_at
+            ? $now->diffInSeconds(Carbon::parse($row->started_at))
+            : $row->duration;
         $row->save();
 
         return $row;
     }
 
-    public function stopActiveForTasks(array $taskIds): int
+    public function stopActiveTimersForTasks(array $taskIds): int
     {
         if ($taskIds === []) {
             return 0;
         }
 
-        return Timer::query()
+        $timers = Timer::query()
             ->whereIn('task_id', $taskIds)
             ->whereNull('stopped_at')
-            ->update([
-                'stopped_at' => now(),
-            ]);
+            ->get();
+
+        if ($timers->isEmpty()) {
+            return 0;
+        }
+
+        $now = Carbon::now();
+
+        foreach ($timers as $timer) {
+            $timer->stopped_at = $now;
+            $timer->duration = $timer->started_at
+                ? $now->diffInSeconds(Carbon::parse($timer->started_at))
+                : $timer->duration;
+            $timer->save();
+        }
+
+        return $timers->count();
     }
 
     public function findActiveWithContext(string $userId): ?Timer

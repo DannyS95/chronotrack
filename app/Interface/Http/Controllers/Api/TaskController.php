@@ -32,7 +32,7 @@ class TaskController extends Controller
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
-        $dto = new CreateTaskDTO(...[
+        $dto = CreateTaskDTO::fromArray([
             ...$request->validated(),
             'project_id' => $project->id,
             'user_id' => (string) $auth->id(),
@@ -51,7 +51,7 @@ class TaskController extends Controller
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
-        $dto = new TaskFilterDTO(...[
+        $dto = TaskFilterDTO::fromArray([
             ...$request->validated(),
             'project_id' => $project->id,
             'user_id'    => (string) $auth->id(),

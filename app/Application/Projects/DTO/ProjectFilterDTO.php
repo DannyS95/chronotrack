@@ -37,4 +37,23 @@ readonly class ProjectFilterDTO
             'user_id'       => $this->user_id,
         ];
     }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            search: $attributes['search'] ?? null,
+            id: $attributes['id'] ?? null,
+            name: $attributes['name'] ?? null,
+            description: $attributes['description'] ?? null,
+            from: $attributes['from'] ?? null,
+            to: $attributes['to'] ?? null,
+            deadlineFrom: $attributes['deadline_from'] ?? null,
+            deadlineTo: $attributes['deadline_to'] ?? null,
+            archived: $attributes['archived'] ?? null,
+            sort_by: $attributes['sort_by'] ?? 'created_at',
+            sortDirection: $attributes['sort_direction'] ?? 'desc',
+            per_page: $attributes['per_page'] ?? 10,
+            user_id: $attributes['user_id'] ?? 0,
+        );
+    }
 }

@@ -56,7 +56,7 @@ final class CompleteGoalService
 
             $timersStopped = $tasks->isEmpty()
                 ? 0
-                : $this->timers->stopActiveForTasks($tasks->pluck('id')->values()->all());
+                : $this->timers->stopActiveTimersForTasks($tasks->pluck('id')->values()->all());
 
             $snapshot = $goal->status === 'complete'
                 ? GoalSnapshot::fromModel($goal)

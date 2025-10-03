@@ -16,7 +16,7 @@ final class TimerController extends Controller
 
     public function index(TimerFilterRequest $request)
     {
-        $dto = new TimerFilterDTO(...[
+        $dto = TimerFilterDTO::fromArray([
             ...$request->validated(),
             'userId' => $request->user()->id,
         ]);

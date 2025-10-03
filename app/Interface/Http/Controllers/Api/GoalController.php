@@ -39,7 +39,7 @@ final class GoalController extends Controller
      */
     public function index(GoalFilterRequest $request, Project $project): JsonResponse
     {
-        $dto = new GoalFilterDTO(...[
+        $dto = GoalFilterDTO::fromArray([
             ...$request->validated(),
         ]);
 
@@ -53,7 +53,7 @@ final class GoalController extends Controller
      */
     public function store(StoreGoalRequest $request, Project $project)
     {
-        $dto = new CreateGoalDTO(...[
+        $dto = CreateGoalDTO::fromArray([
             ...$request->validated(),
             'project_id' => $project->id,
             'user_id'    => $request->user()->id,

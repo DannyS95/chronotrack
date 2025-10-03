@@ -12,10 +12,10 @@ interface TimerRepositoryInterface
 
     public function createRunning(string $taskId): Timer;
 
-    public function stopActiveForUserOnTask(string $taskId, string $userId): ?Timer;
+    public function stopActiveTimerForTask(string $taskId): ?Timer;
 
     /** @param array<int, string> $taskIds */
-    public function stopActiveForTasks(array $taskIds): int;
+    public function stopActiveTimersForTasks(array $taskIds): int;
 
     public function findActiveWithContext(string $userId): ?Timer;
 

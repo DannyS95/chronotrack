@@ -28,4 +28,18 @@ class GoalFilterDTO
             'per_page'   => $this->per_page,
         ];
     }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            status: $attributes['status'] ?? null,
+            id: $attributes['id'] ?? null,
+            from: $attributes['from'] ?? null,
+            to: $attributes['to'] ?? null,
+            deadline: $attributes['deadline'] ?? null,
+            sort_by: $attributes['sort_by'] ?? null,
+            order: $attributes['order'] ?? null,
+            per_page: $attributes['per_page'] ?? 20,
+        );
+    }
 }

@@ -9,7 +9,7 @@ readonly class CreateProjectDTO
     public function __construct(
         public string $name,
         public ?string $description,
-        public string $deadline,
+        public ?string $deadline,
         public int|string $user_id,
     ) {}
 
@@ -21,6 +21,16 @@ readonly class CreateProjectDTO
             'deadline' => $this->deadline,
             'user_id' => $this->user_id,
         ];
+    }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            name: $attributes['name'],
+            description: $attributes['description'] ?? null,
+            deadline: $attributes['deadline'] ?? null,
+            user_id: $attributes['user_id'],
+        );
     }
 
     public static function fromModel(Project $project): self

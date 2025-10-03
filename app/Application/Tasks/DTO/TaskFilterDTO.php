@@ -29,4 +29,19 @@ final class TaskFilterDTO
             'per_page' => $this->per_page,
         ];
     }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self(
+            project_id: $attributes['project_id'],
+            user_id: $attributes['user_id'],
+            title: $attributes['title'] ?? null,
+            status: $attributes['status'] ?? null,
+            from: $attributes['from'] ?? null,
+            to: $attributes['to'] ?? null,
+            sort_by: $attributes['sort_by'] ?? 'created_at',
+            order: $attributes['order'] ?? 'desc',
+            per_page: $attributes['per_page'] ?? 20,
+        );
+    }
 }
