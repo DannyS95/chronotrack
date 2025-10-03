@@ -26,13 +26,10 @@ final class TaskRepository implements TaskRepositoryInterface
             ->where('user_id', $userId)
             ->firstOrFail();
 
-        $paginator = Task::applyFilters($filters)
+        return Task::applyFilters($filters)
             ->ownedBy($project->id, $userId)
-            ->paginate($perPage);
-
-        $paginator->getCollection()->transform(fn(Task $task) => TaskSnapshot::fromModel($task));
-
-        return $paginator;
+            ->paginate($perPage)
+            ->through(fn(Task $task) => TaskSnapshot::fromModel($task));
     }
 
     public function userOwnsTask(string $taskId, string $userId): bool

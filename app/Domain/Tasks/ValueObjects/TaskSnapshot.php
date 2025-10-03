@@ -22,7 +22,7 @@ final class TaskSnapshot
     public static function fromModel(TaskModel $task): self
     {
         $formatDate = static fn($value) => match (true) {
-            $value instanceof \DateTimeInterface => $value->toDateTimeString(),
+            $value instanceof \DateTimeInterface => $value->format('Y-m-d H:i:s'),
             is_string($value)                    => $value,
             default                              => null,
         };
