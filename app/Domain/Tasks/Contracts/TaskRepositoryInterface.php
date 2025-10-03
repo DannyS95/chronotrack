@@ -17,6 +17,8 @@ interface TaskRepositoryInterface
 
     public function findOwned(string $taskId, string $projectId, string $userId): Task;
 
+    public function findSnapshot(string $taskId, string $projectId, string $userId): TaskSnapshot;
+
     public function updateGoal(Task $task, ?string $goalId): void;
 
     /** @return Collection<int, TaskSnapshot> */

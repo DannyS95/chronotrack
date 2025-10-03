@@ -49,6 +49,15 @@ final class TaskRepository implements TaskRepositoryInterface
             ->firstOrFail();
     }
 
+    public function findSnapshot(string $taskId, string $projectId, string $userId): TaskSnapshot
+    {
+        $task = $this->findOwned($taskId, $projectId, $userId);
+
+        $task->loadMissing('timers');
+
+        return TaskSnapshot::fromModel($task);
+    }
+
     public function updateGoal(Task $task, ?string $goalId): void
     {
         $task->goal_id = $goalId;

@@ -11,6 +11,7 @@ use App\Application\Tasks\DTO\UpdateTaskDTO;
 use App\Application\Tasks\Services\CreateTaskService;
 use App\Application\Tasks\Services\DeleteTaskService;
 use App\Application\Tasks\Services\ListTasksService;
+use App\Application\Tasks\Services\ShowTaskService;
 use App\Application\Tasks\Services\UpdateTaskService;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
@@ -23,9 +24,20 @@ class TaskController extends Controller
     public function __construct(
         private readonly CreateTaskService $createTaskService,
         private readonly ListTasksService $listTasksService,
+        private readonly ShowTaskService $showTaskService,
         private readonly UpdateTaskService $updateTaskService,
         private readonly DeleteTaskService $deleteTaskService,
     ) {}
+
+    public function show(Project $project, Task $task): JsonResponse
+    {
+        /** @var \Illuminate\Contracts\Auth\Guard $auth */
+        $auth = auth();
+
+        $viewModel = $this->showTaskService->handle($project, $task, (string) $auth->id());
+
+        return response()->json($viewModel->toArray());
+    }
 
     public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
