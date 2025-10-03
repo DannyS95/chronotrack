@@ -46,9 +46,12 @@ final class TimerRepository implements TimerRepositoryInterface
         $now = Carbon::now();
 
         $row->stopped_at = $now;
-        $row->duration = $row->started_at
-            ? $now->diffInSeconds(Carbon::parse($row->started_at))
-            : $row->duration;
+
+        if ($row->started_at) {
+            $startedAt = Carbon::parse($row->started_at);
+            $seconds = $startedAt->floatDiffInSeconds($now, false);
+            $row->duration = max(0, (int) round($seconds));
+        }
         $row->save();
 
         return $row;
@@ -73,9 +76,12 @@ final class TimerRepository implements TimerRepositoryInterface
 
         foreach ($timers as $timer) {
             $timer->stopped_at = $now;
-            $timer->duration = $timer->started_at
-                ? $now->diffInSeconds(Carbon::parse($timer->started_at))
-                : $timer->duration;
+
+            if ($timer->started_at) {
+                $startedAt = Carbon::parse($timer->started_at);
+                $seconds = $startedAt->floatDiffInSeconds($now, false);
+                $timer->duration = max(0, (int) round($seconds));
+            }
             $timer->save();
         }
 

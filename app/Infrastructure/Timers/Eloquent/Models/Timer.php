@@ -18,6 +18,13 @@ class Timer extends BaseModel
         'duration',
     ];
 
+    protected $casts = [
+        'started_at' => 'datetime',
+        'paused_at' => 'datetime',
+        'stopped_at' => 'datetime',
+        'duration' => 'integer',
+    ];
+
     /**
      * Filters that can be applied through filters()
      */

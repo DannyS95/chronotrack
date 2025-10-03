@@ -10,6 +10,9 @@ final class TaskProgressViewModel
         private readonly string $id,
         private readonly string $title,
         private readonly ?string $status,
+        private readonly ?string $activeSince,
+        private readonly int $activeDurationSeconds,
+        private readonly ?string $activeDurationHuman,
     ) {}
 
     public static function fromSnapshot(TaskSnapshot $snapshot): self
@@ -18,6 +21,9 @@ final class TaskProgressViewModel
             id: $snapshot->id,
             title: $snapshot->title,
             status: $snapshot->status,
+            activeSince: $snapshot->activeSince,
+            activeDurationSeconds: $snapshot->activeDurationSeconds,
+            activeDurationHuman: $snapshot->activeDurationHuman,
         );
     }
 
@@ -27,6 +33,9 @@ final class TaskProgressViewModel
             'id'     => $this->id,
             'title'  => $this->title,
             'status' => $this->status,
+            'active_since' => $this->activeSince,
+            'active_duration_seconds' => $this->activeDurationSeconds,
+            'active_duration_human' => $this->activeDurationHuman,
         ];
     }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Domain\Tasks\ValueObjects;
 
+use App\Domain\Common\Support\TimerDurations;
 use App\Infrastructure\Tasks\Eloquent\Models\Task as TaskModel;
-use App\Infrastructure\Timers\Eloquent\Models\Timer;
-use Carbon\CarbonInterval;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use App\Infrastructure\Timers\Eloquent\Models\Timer;
 
 final class TaskSnapshot
 {
@@ -38,11 +38,10 @@ final class TaskSnapshot
             ? $task->timers
             : $task->timers()->get();
 
-        $totalSeconds = self::calculateTotalSeconds($timers);
-        $activeSince = $formatDate($task->created_at);
-        $activeDurationHuman = $totalSeconds > 0
-            ? CarbonInterval::seconds($totalSeconds)->cascade()->forHumans(short: true)
-            : null;
+        $totalSeconds = max(0, self::calculateTotalSeconds($timers));
+        $activeSinceDate = TimerDurations::determineActiveSinceFromCollection($timers);
+        $activeSince = $activeSinceDate ? $formatDate($activeSinceDate) : null;
+        $activeDurationHuman = TimerDurations::humanizeSeconds($totalSeconds);
 
         return new self(
             id: $task->id,
@@ -78,21 +77,6 @@ final class TaskSnapshot
         $now = Carbon::now();
 
         # walk through timers and sum the total duration or calculate the running time from diff in seconds
-        return $timers->reduce(function (int $carry, Timer $timer) use ($now) {
-            $startedAt = $timer->started_at ? Carbon::parse($timer->started_at) : null;
-            if (! $startedAt) {
-                return $carry;
-            }
-
-            if ($timer->duration !== null) {
-                return $carry + (int) $timer->duration;
-            }
-
-            # current time, if timer is still running
-            # or when the timer was stopped
-            $stoppedAt = $timer->stopped_at ? Carbon::parse($timer->stopped_at) : $now;
-
-            return $carry + $stoppedAt->diffInSeconds($startedAt);
-        }, 0);
+        return TimerDurations::sumDurationsFromCollection($timers, $now);
     }
 }
