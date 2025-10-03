@@ -23,7 +23,9 @@ final class GoalSnapshot
             title: $goal->title,
             status: $goal->status,
             description: $goal->description,
-            completedAt: $goal->completed_at?->toDateTimeString(),
+            completedAt: $goal->completed_at instanceof \DateTimeInterface
+                ? $goal->completed_at->format('Y-m-d H:i:s')
+                : $goal->completed_at,
         );
     }
 

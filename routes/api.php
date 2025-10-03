@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
         Route::post('{project}/goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
         Route::get('{project}/goals/{goal}', [GoalController::class, 'show'])->name('api.projects.goals.show');
         Route::get('{project}/goals/{goal}/progress', [GoalController::class, 'progress'])->name('api.projects.goals.progress');
+        Route::post('{project}/goals/{goal}/complete', [GoalController::class, 'complete'])->name('api.projects.goals.complete');
         Route::post('{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'attach'])->name('api.projects.goals.tasks.attach');
         Route::delete('{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'detach'])->name('api.projects.goals.tasks.detach');
     });

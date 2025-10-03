@@ -6,6 +6,7 @@ use App\Application\Goals\DTO\AttachTaskToGoalDTO;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
 
 class DetachTaskFromGoalService
 {
@@ -18,6 +19,12 @@ class DetachTaskFromGoalService
     {
         // Verify goal ownership
         $goal = $this->goals->findOwned($dto->goalId, $dto->projectId, $dto->userId);
+
+        if ($goal->status === 'complete') {
+            throw ValidationException::withMessages([
+                'goal_id' => ['Cannot detach tasks from a completed goal.'],
+            ]);
+        }
 
         // Verify task ownership
         $task = $this->tasks->findOwned($dto->taskId, $dto->projectId, $dto->userId);

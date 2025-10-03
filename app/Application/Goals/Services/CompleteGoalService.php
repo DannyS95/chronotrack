@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Application\Goals\Services;
+
+use App\Application\Goals\DTO\CompleteGoalDTO;
+use App\Domain\Goals\Contracts\GoalRepositoryInterface;
+use App\Domain\Goals\ValueObjects\GoalSnapshot;
+use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
+use App\Domain\Timers\Contracts\TimerRepositoryInterface;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+
+final class CompleteGoalService
+{
+    public function __construct(
+        private GoalRepositoryInterface $goals,
+        private TaskRepositoryInterface $tasks,
+        private TimerRepositoryInterface $timers,
+    ) {}
+
+    /**
+     * @return array{goal_id:string,status:?string,completed_at:?string,cascade:array{tasks_marked_complete:int,timers_stopped:int}}
+     */
+    public function handle(CompleteGoalDTO $dto): array
+    {
+        return DB::transaction(function () use ($dto) {
+            $goal = $this->goals->findOwned($dto->goalId, $dto->projectId, $dto->userId);
+
+            $tasks = $this->tasks->getTasksByGoal($goal->id, $dto->projectId, $dto->userId);
+
+            $incompleteTaskIds = $tasks
+                ->filter(fn($task) => $task->status !== 'done')
+                ->pluck('id')
+                ->values()
+                ->all();
+
+            $tasksMarkedComplete = 0;
+
+            if ($incompleteTaskIds !== []) {
+                $tasksMarkedComplete = $this->tasks->markTasksAsComplete($incompleteTaskIds);
+
+                if ($tasksMarkedComplete !== count($incompleteTaskIds)) {
+                    Log::warning('Failed to mark goal tasks as complete', [
+                        'goal_id' => $dto->goalId,
+                        'project_id' => $dto->projectId,
+                        'user_id' => $dto->userId,
+                        'expected' => count($incompleteTaskIds),
+                        'affected' => $tasksMarkedComplete,
+                        'task_ids' => $incompleteTaskIds,
+                    ]);
+
+                    throw new RuntimeException('Failed to mark all goal tasks as complete.');
+                }
+            }
+
+            $timersStopped = $tasks->isEmpty()
+                ? 0
+                : $this->timers->stopActiveForTasks($tasks->pluck('id')->values()->all());
+
+            $snapshot = $goal->status === 'complete'
+                ? GoalSnapshot::fromModel($goal)
+                : $this->goals->updateStatusSnapshot($goal->id, 'complete', now());
+
+            return [
+                'goal_id' => $snapshot->id,
+                'status' => $snapshot->status,
+                'completed_at' => $snapshot->completedAt,
+                'cascade' => [
+                    'tasks_marked_complete' => $tasksMarkedComplete,
+                    'timers_stopped' => $timersStopped,
+                ],
+            ];
+        });
+    }
+}

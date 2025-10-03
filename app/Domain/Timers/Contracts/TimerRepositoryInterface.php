@@ -14,6 +14,9 @@ interface TimerRepositoryInterface
 
     public function stopActiveForUserOnTask(string $taskId, string $userId): ?Timer;
 
+    /** @param array<int, string> $taskIds */
+    public function stopActiveForTasks(array $taskIds): int;
+
     public function findActiveWithContext(string $userId): ?Timer;
 
     public function list(array $filters): LengthAwarePaginator;

@@ -48,6 +48,20 @@ final class TimerRepository implements TimerRepositoryInterface
         return $row;
     }
 
+    public function stopActiveForTasks(array $taskIds): int
+    {
+        if ($taskIds === []) {
+            return 0;
+        }
+
+        return Timer::query()
+            ->whereIn('task_id', $taskIds)
+            ->whereNull('stopped_at')
+            ->update([
+                'stopped_at' => now(),
+            ]);
+    }
+
     public function findActiveWithContext(string $userId): ?Timer
     {
         return Timer::query()

@@ -79,4 +79,26 @@ final class TaskRepository implements TaskRepositoryInterface
             ->map(fn(Task $task) => TaskSnapshot::fromModel($task))
             ->values();
     }
+
+    public function getTasksByGoal(string $goalId, string $projectId, string $userId): Collection
+    {
+        return Task::query()
+            ->ownedBy($projectId, $userId)
+            ->where('goal_id', $goalId)
+            ->get();
+    }
+
+    public function markTasksAsComplete(array $taskIds): int
+    {
+        if ($taskIds === []) {
+            return 0;
+        }
+
+        return Task::query()
+            ->whereKey($taskIds)
+            ->update([
+                'status' => 'done',
+                'last_activity_at' => now(),
+            ]);
+    }
 }

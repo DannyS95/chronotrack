@@ -3,12 +3,14 @@
 namespace App\Interface\Http\Controllers\Api;
 
 use App\Application\Goals\DTO\AttachTaskToGoalDTO;
+use App\Application\Goals\DTO\CompleteGoalDTO;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Application\Goals\DTO\CreateGoalDTO;
 use App\Application\Goals\DTO\GoalFilterDTO;
 use App\Application\Goals\Services\AttachTaskToGoalService;
+use App\Application\Goals\Services\CompleteGoalService;
 use App\Application\Goals\Services\CreateGoalService;
 use App\Application\Goals\Services\DetachTaskFromGoalService;
 use App\Application\Goals\Services\ListGoalsService;
@@ -29,6 +31,7 @@ final class GoalController extends Controller
         private DetachTaskFromGoalService $detachService,
         private readonly ShowGoalService $showGoalService,
         private readonly GoalProgressService $goalProgressService,
+        private readonly CompleteGoalService $completeGoalService,
     ) {}
 
     /**
@@ -115,5 +118,21 @@ final class GoalController extends Controller
         );
 
         return response()->json($viewModel->toArray());
+    }
+
+    public function complete(Project $project, Goal $goal): JsonResponse
+    {
+        /** @var \Illuminate\Contracts\Auth\Guard $auth */
+        $auth = auth();
+
+        $dto = new CompleteGoalDTO(
+            projectId: $project->id,
+            goalId: $goal->id,
+            userId: (string) $auth->id(),
+        );
+
+        $result = $this->completeGoalService->handle($dto);
+
+        return response()->json($result);
     }
 }
