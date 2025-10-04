@@ -2,19 +2,48 @@
 
 namespace App\Infrastructure\Timers\Persistence\Eloquent;
 
-use App\Application\Timers\DTO\TimerFilterDTO;
+use App\Domain\Common\Enums\ComparisonOperator;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
-use Illuminate\Support\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Carbon;
 
 final class TimerRepository implements TimerRepositoryInterface
 {
-    public function findActiveForUserLock(string $task_id): ?Timer
+    public function findActiveForTaskLock(string $taskId): ?Timer
     {
         return Timer::query()
-            ->where('task_id', $task_id)
+            ->where('task_id', $taskId)
             ->whereNull('stopped_at')
+            ->latest('started_at')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function findActiveForGoalLock(string $goalId, string $userId, ?string $excludingTaskId = null): ?Timer
+    {
+        return Timer::query()
+            ->whereNull('stopped_at')
+            ->whereHas('task', function (Builder $query) use ($goalId, $userId, $excludingTaskId) {
+                $query->where('goal_id', $goalId)
+                    ->when($excludingTaskId, fn(Builder $q) => $q->where('id', ComparisonOperator::NotEqual->value, $excludingTaskId))
+                    ->whereHas('project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
+            })
+            ->latest('started_at')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function findActiveWithoutGoalForUserLock(string $userId, ?string $excludingTaskId = null): ?Timer
+    {
+        return Timer::query()
+            ->whereNull('stopped_at')
+            ->whereHas('task', function ($query) use ($userId, $excludingTaskId) {
+                $query->whereNull('goal_id')
+                    ->when($excludingTaskId, fn($q) => $q->where('id', ComparisonOperator::NotEqual->value, $excludingTaskId))
+                    ->whereHas('project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
+            })
             ->latest('started_at')
             ->lockForUpdate()
             ->first();

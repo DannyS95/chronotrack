@@ -3,6 +3,8 @@
 namespace App\Infrastructure\Timers\Eloquent\Models;
 
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
+use App\Infrastructure\Tasks\Eloquent\Models\Task;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Timer extends BaseModel
 {
@@ -24,6 +26,11 @@ class Timer extends BaseModel
         'stopped_at' => 'datetime',
         'duration' => 'integer',
     ];
+
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'task_id');
+    }
 
     /**
      * Filters that can be applied through filters()
