@@ -11,4 +11,8 @@ interface ProjectRepositoryInterface
     public function create(array $data): Project;
     public function findById(string $id): ?Project;
     public function getAll(array $id): Builder;
+
+    public function findOwned(string $projectId, string $userId): Project;
+
+    public function delete(Project $project): void;
 }

@@ -14,9 +14,9 @@ use RuntimeException;
 final class CompleteGoalService
 {
     public function __construct(
-        private GoalRepositoryInterface $goals,
-        private TaskRepositoryInterface $tasks,
-        private TimerRepositoryInterface $timers,
+        private GoalRepositoryInterface $goalRepository,
+        private TaskRepositoryInterface $taskRepository,
+        private TimerRepositoryInterface $timerRepository,
     ) {}
 
     /**
@@ -25,9 +25,9 @@ final class CompleteGoalService
     public function handle(CompleteGoalDTO $dto): array
     {
         return DB::transaction(function () use ($dto) {
-            $goal = $this->goals->findOwned($dto->goalId, $dto->projectId, $dto->userId);
+            $goal = $this->goalRepository->findOwned($dto->goalId, $dto->projectId, $dto->userId);
 
-            $tasks = $this->tasks->getTasksByGoal($goal->id, $dto->projectId, $dto->userId);
+            $tasks = $this->taskRepository->getTasksByGoal($goal->id, $dto->projectId, $dto->userId);
 
             $incompleteTaskIds = $tasks
                 ->filter(fn($task) => $task->status !== 'done')
@@ -38,7 +38,7 @@ final class CompleteGoalService
             $tasksMarkedComplete = 0;
 
             if ($incompleteTaskIds !== []) {
-                $tasksMarkedComplete = $this->tasks->markTasksAsComplete($incompleteTaskIds);
+                $tasksMarkedComplete = $this->taskRepository->markTasksAsComplete($incompleteTaskIds);
 
                 if ($tasksMarkedComplete !== count($incompleteTaskIds)) {
                     Log::warning('Failed to mark goal tasks as complete', [
@@ -56,11 +56,11 @@ final class CompleteGoalService
 
             $timersStopped = $tasks->isEmpty()
                 ? 0
-                : $this->timers->stopActiveTimersForTasks($tasks->pluck('id')->values()->all());
+                : $this->timerRepository->stopActiveTimersForTasks($tasks->pluck('id')->values()->all());
 
             $snapshot = $goal->status === 'complete'
                 ? GoalSnapshot::fromModel($goal)
-                : $this->goals->updateStatusSnapshot($goal->id, 'complete', now());
+                : $this->goalRepository->updateStatusSnapshot($goal->id, 'complete', now());
 
             return [
                 'goal_id' => $snapshot->id,

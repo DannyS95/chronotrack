@@ -11,7 +11,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 final class ShowTaskService
 {
     public function __construct(
-        private readonly TaskRepositoryInterface $tasks,
+        private readonly TaskRepositoryInterface $taskRepository,
     ) {}
 
     public function handle(Project $project, Task $task, string $userId): TaskViewModel
@@ -20,7 +20,7 @@ final class ShowTaskService
             throw new AuthorizationException('Task does not belong to the provided project.');
         }
 
-        $snapshot = $this->tasks->findSnapshot($task->id, $project->id, $userId);
+        $snapshot = $this->taskRepository->findSnapshot($task->id, $project->id, $userId);
 
         return TaskViewModel::fromSnapshot($snapshot);
     }

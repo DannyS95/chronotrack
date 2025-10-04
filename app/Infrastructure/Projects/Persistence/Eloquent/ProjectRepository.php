@@ -28,4 +28,17 @@ final class ProjectRepository implements ProjectRepositoryInterface
     {
         return Project::applyFilters((array) $filters);
     }
+
+    public function findOwned(string $projectId, string $userId): Project
+    {
+        return Project::query()
+            ->where('id', $projectId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+    }
+
+    public function delete(Project $project): void
+    {
+        $project->delete();
+    }
 }

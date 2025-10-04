@@ -10,17 +10,17 @@ use Illuminate\Validation\ValidationException;
 class AttachTaskToGoalService
 {
     public function __construct(
-        private GoalRepositoryInterface $goals,
-        private TaskRepositoryInterface $tasks
+        private GoalRepositoryInterface $goalRepository,
+        private TaskRepositoryInterface $taskRepository
     ) {}
 
     public function handle(AttachTaskToGoalDTO $dto): void
     {
         // Verify goal ownership
-        $goal = $this->goals->findOwned($dto->goalId, $dto->projectId, $dto->userId);
+        $goal = $this->goalRepository->findOwned($dto->goalId, $dto->projectId, $dto->userId);
 
         // Verify task ownership
-        $task = $this->tasks->findOwned($dto->taskId, $dto->projectId, $dto->userId);
+        $task = $this->taskRepository->findOwned($dto->taskId, $dto->projectId, $dto->userId);
 
         if ($task->goal_id === $goal->id) {
             throw ValidationException::withMessages([
@@ -29,6 +29,6 @@ class AttachTaskToGoalService
         }
 
         // Attach by setting task's goal reference
-        $this->tasks->updateGoal($task, $goal->id);
+        $this->taskRepository->updateGoal($task, $goal->id);
     }
 }

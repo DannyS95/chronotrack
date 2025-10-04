@@ -9,11 +9,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 final class ListTimersService
 {
     public function __construct(
-        private readonly TimerRepositoryInterface $repo
+        private readonly TimerRepositoryInterface $timerRepository
     ) {}
 
     public function handle(TimerFilterDTO $dto): LengthAwarePaginator
     {
-        return $this->repo->list($dto->toArray());
+        return $this->timerRepository->list($dto->toArray());
     }
 }

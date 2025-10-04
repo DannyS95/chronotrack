@@ -8,11 +8,11 @@ use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 final class CreateGoalService
 {
     public function __construct(
-        private readonly GoalRepositoryInterface $repo
+        private readonly GoalRepositoryInterface $goalRepository
     ) {}
 
     public function handle(CreateGoalDTO $dto)
     {
-        return $this->repo->create($dto->toArray());
+        return $this->goalRepository->create($dto->toArray());
     }
 }

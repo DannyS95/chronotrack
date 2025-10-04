@@ -10,11 +10,11 @@ use Illuminate\Support\Collection;
 final class ListGoalsService
 {
     public function __construct(
-        private readonly GoalRepositoryInterface $repo
+        private readonly GoalRepositoryInterface $goalRepository
     ) {}
 
     public function handle(GoalFilterDTO $dto, Project $project): Collection
     {
-        return $this->repo->list($dto->toArray(), $project);
+        return $this->goalRepository->list($dto->toArray(), $project);
     }
 }

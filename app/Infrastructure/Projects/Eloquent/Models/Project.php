@@ -8,10 +8,12 @@ use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Project extends BaseModel
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'projects';
 

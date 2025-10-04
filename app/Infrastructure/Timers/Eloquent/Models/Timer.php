@@ -5,9 +5,11 @@ namespace App\Infrastructure\Timers\Eloquent\Models;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\BaseModel;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Timer extends BaseModel
 {
+    use SoftDeletes;
     protected $table = 'timers';
 
     protected $fillable = [

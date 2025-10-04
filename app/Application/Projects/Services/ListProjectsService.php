@@ -9,12 +9,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class ListProjectsService
 {
     public function __construct(
-        private ProjectRepositoryInterface $repository
+        private ProjectRepositoryInterface $projectRepository
     ) {}
 
     public function handle(ProjectFilterDto $projectFiltersDto): LengthAwarePaginator
     {
-        return $this->repository
+        return $this->projectRepository
             ->getAll($projectFiltersDto->toArray())
             ->paginate($projectFiltersDto->per_page);
     }

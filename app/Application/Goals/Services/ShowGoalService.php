@@ -11,7 +11,7 @@ use Illuminate\Support\Arr;
 final class ShowGoalService
 {
     public function __construct(
-        private readonly GoalRepositoryInterface $repo
+        private readonly GoalRepositoryInterface $goalRepository
     ) {}
 
     public function handle(Project $project, Goal $goal, int|string $userId): array
@@ -20,7 +20,7 @@ final class ShowGoalService
             throw new AuthorizationException('Goal does not belong to the provided project.');
         }
 
-        $ownedGoal = $this->repo->findOwned($goal->id, $project->id, (string) $userId);
+        $ownedGoal = $this->goalRepository->findOwned($goal->id, $project->id, (string) $userId);
 
         return Arr::only($ownedGoal->toArray(), [
             'id',

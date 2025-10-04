@@ -116,4 +116,12 @@ final class TaskRepository implements TaskRepositoryInterface
                 'last_activity_at' => now(),
             ]);
     }
+
+    public function getTasksByProject(string $projectId, string $userId): Collection
+    {
+        return Task::query()
+            ->ownedBy($projectId, $userId)
+            ->with('timers')
+            ->get();
+    }
 }

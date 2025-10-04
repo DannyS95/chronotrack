@@ -11,14 +11,14 @@ use Illuminate\Validation\ValidationException;
 class DetachTaskFromGoalService
 {
     public function __construct(
-        private GoalRepositoryInterface $goals,
-        private TaskRepositoryInterface $tasks
+        private GoalRepositoryInterface $goalRepository,
+        private TaskRepositoryInterface $taskRepository
     ) {}
 
     public function handle(AttachTaskToGoalDTO $dto): void
     {
         // Verify goal ownership
-        $goal = $this->goals->findOwned($dto->goalId, $dto->projectId, $dto->userId);
+        $goal = $this->goalRepository->findOwned($dto->goalId, $dto->projectId, $dto->userId);
 
         if ($goal->status === 'complete') {
             throw ValidationException::withMessages([
@@ -27,13 +27,13 @@ class DetachTaskFromGoalService
         }
 
         // Verify task ownership
-        $task = $this->tasks->findOwned($dto->taskId, $dto->projectId, $dto->userId);
+        $task = $this->taskRepository->findOwned($dto->taskId, $dto->projectId, $dto->userId);
 
         if ($task->goal_id !== $goal->id) {
             throw new AuthorizationException('Task is not attached to the provided goal.');
         }
 
         // Detach by clearing task's goal reference
-        $this->tasks->updateGoal($task, null);
+        $this->taskRepository->updateGoal($task, null);
     }
 }

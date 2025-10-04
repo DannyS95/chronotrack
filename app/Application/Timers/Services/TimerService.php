@@ -15,7 +15,7 @@ use App\Infrastructure\Timers\Eloquent\Models\Timer;
 final class TimerService
 {
     public function __construct(
-        private readonly TimerRepositoryInterface $timers,
+        private readonly TimerRepositoryInterface $timerRepository,
         private readonly TaskRepositoryInterface $taskRepository,
         private readonly TransactionRunner $tx,
     ) {}
@@ -28,26 +28,26 @@ final class TimerService
                 throw new NotOwnerOfTask();
             }
 
-            $activeForTask = $this->timers->findActiveForTaskLock($task->id);
+            $activeForTask = $this->timerRepository->findActiveForTaskLock($task->id);
             if ($activeForTask) {
                 throw new ActiveTimerExists((string) $activeForTask->id);
             }
 
             if ($task->goal_id) {
-                $activeWithinGoal = $this->timers->findActiveForGoalLock($task->goal_id, $userId, $task->id);
+                $activeWithinGoal = $this->timerRepository->findActiveForGoalLock($task->goal_id, $userId, $task->id);
 
                 if ($activeWithinGoal) {
                     throw new ActiveTimerWithinGoalException((string) $activeWithinGoal->id);
                 }
             } else {
-                $activeWithoutGoal = $this->timers->findActiveWithoutGoalForUserLock($userId, $task->id);
+                $activeWithoutGoal = $this->timerRepository->findActiveWithoutGoalForUserLock($userId, $task->id);
 
                 if ($activeWithoutGoal) {
                     throw new ActiveTimerExists((string) $activeWithoutGoal->id);
                 }
             }
 
-            return $this->timers->createRunning($task->id);
+            return $this->timerRepository->createRunning($task->id);
         });
     }
 
@@ -58,7 +58,7 @@ final class TimerService
                 throw new NotOwnerOfTask();
             }
 
-            $stopped = $this->timers->stopActiveTimerForTask($task->id);
+            $stopped = $this->timerRepository->stopActiveTimerForTask($task->id);
             if (! $stopped) {
                 throw new NoActiveTimerOnTask();
             }
@@ -69,6 +69,6 @@ final class TimerService
 
     public function activeForUser(string $userId): ?Timer
     {
-        return $this->timers->findActiveWithContext($userId);
+        return $this->timerRepository->findActiveWithContext($userId);
     }
 }

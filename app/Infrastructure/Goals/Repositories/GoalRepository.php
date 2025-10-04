@@ -52,4 +52,16 @@ class GoalRepository implements GoalRepositoryInterface
 
         return GoalSnapshot::fromModel($goal);
     }
+
+    public function getByProject(string $projectId, string $userId): Collection
+    {
+        return Goal::query()
+            ->ownedBy($projectId, $userId)
+            ->get();
+    }
+
+    public function delete(Goal $goal): void
+    {
+        $goal->delete();
+    }
 }

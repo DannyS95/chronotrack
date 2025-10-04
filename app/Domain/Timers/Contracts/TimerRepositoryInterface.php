@@ -20,6 +20,9 @@ interface TimerRepositoryInterface
     /** @param array<int, string> $taskIds */
     public function stopActiveTimersForTasks(array $taskIds): int;
 
+    /** @param array<int, string> $taskIds */
+    public function deleteTimersForTasks(array $taskIds): int;
+
     public function findActiveWithContext(string $userId): ?Timer;
 
     public function list(array $filters): LengthAwarePaginator;

@@ -18,4 +18,9 @@ interface GoalRepositoryInterface
     public function findSnapshot(string $goalId, string $projectId, string $userId): GoalSnapshot;
 
     public function updateStatusSnapshot(string $goalId, string $status, ?string $completedAt = null): GoalSnapshot;
+
+    /** @return Collection<int, Goal> */
+    public function getByProject(string $projectId, string $userId): Collection;
+
+    public function delete(Goal $goal): void;
 }

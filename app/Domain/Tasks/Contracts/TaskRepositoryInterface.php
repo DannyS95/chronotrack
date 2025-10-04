@@ -34,4 +34,7 @@ interface TaskRepositoryInterface
 
     /** @param array<int, string> $taskIds */
     public function markTasksAsComplete(array $taskIds): int;
+
+    /** @return Collection<int, Task> */
+    public function getTasksByProject(string $projectId, string $userId): Collection;
 }

@@ -6,7 +6,7 @@ use App\Domain\Common\Enums\ComparisonOperator;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 final class TimerRepository implements TimerRepositoryInterface
@@ -115,6 +115,17 @@ final class TimerRepository implements TimerRepositoryInterface
         }
 
         return $timers->count();
+    }
+
+    public function deleteTimersForTasks(array $taskIds): int
+    {
+        if ($taskIds === []) {
+            return 0;
+        }
+
+        return Timer::query()
+            ->whereIn('task_id', $taskIds)
+            ->delete();
     }
 
     public function findActiveWithContext(string $userId): ?Timer
