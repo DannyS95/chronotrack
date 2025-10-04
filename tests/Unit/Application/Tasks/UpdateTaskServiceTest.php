@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Application\Tasks;
 
+use App\Application\Projects\Services\ProjectLifecycleService;
 use App\Application\Tasks\DTO\UpdateTaskDTO;
 use App\Application\Tasks\Services\UpdateTaskService;
 use App\Domain\Common\Contracts\TransactionRunner;
@@ -32,6 +33,7 @@ final class UpdateTaskServiceTest extends TestCase
         $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
         $goalRepository = Mockery::mock(GoalRepositoryInterface::class);
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
+        $projectLifecycle = Mockery::mock(ProjectLifecycleService::class);
         $transactionRunner = new class implements TransactionRunner {
             public function run(callable $callback)
             {
@@ -63,10 +65,15 @@ final class UpdateTaskServiceTest extends TestCase
             ->with('task-1', 'project-1', 'user-1')
             ->andReturn($finalSnapshot);
 
+        $projectLifecycle->shouldReceive('refresh')
+            ->once()
+            ->with('project-1', 'user-1');
+
         $service = new UpdateTaskService(
             $taskRepository,
             $goalRepository,
             $timerRepository,
+            $projectLifecycle,
             $transactionRunner,
         );
 
@@ -87,6 +94,7 @@ final class UpdateTaskServiceTest extends TestCase
         $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
         $goalRepository = Mockery::mock(GoalRepositoryInterface::class);
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
+        $projectLifecycle = Mockery::mock(ProjectLifecycleService::class);
         $transactionRunner = new class implements TransactionRunner {
             public function run(callable $callback)
             {
@@ -111,10 +119,15 @@ final class UpdateTaskServiceTest extends TestCase
         $timerRepository->shouldReceive('stopActiveTimerForTask')->never();
         $taskRepository->shouldReceive('findSnapshot')->never();
 
+        $projectLifecycle->shouldReceive('refresh')
+            ->once()
+            ->with('project-1', 'user-1');
+
         $service = new UpdateTaskService(
             $taskRepository,
             $goalRepository,
             $timerRepository,
+            $projectLifecycle,
             $transactionRunner,
         );
 

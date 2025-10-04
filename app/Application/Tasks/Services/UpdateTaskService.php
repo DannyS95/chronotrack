@@ -2,6 +2,7 @@
 
 namespace App\Application\Tasks\Services;
 
+use App\Application\Projects\Services\ProjectLifecycleService;
 use App\Application\Tasks\DTO\UpdateTaskDTO;
 use App\Application\Tasks\ViewModels\TaskViewModel;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
@@ -16,6 +17,7 @@ final class UpdateTaskService
         private TaskRepositoryInterface $taskRepository,
         private GoalRepositoryInterface $goalRepository,
         private TimerRepositoryInterface $timerRepository,
+        private ProjectLifecycleService $projectLifecycleService,
         private TransactionRunner $tx,
     ) {}
 
@@ -60,6 +62,8 @@ final class UpdateTaskService
 
             return $snapshot;
         });
+
+        $this->projectLifecycleService->refresh($dto->project_id, $dto->user_id);
 
         return TaskViewModel::fromSnapshot($snapshot);
     }

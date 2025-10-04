@@ -15,4 +15,8 @@ interface ProjectRepositoryInterface
     public function findOwned(string $projectId, string $userId): Project;
 
     public function delete(Project $project): void;
+
+    public function markComplete(Project $project, string $source): Project;
+
+    public function markActive(Project $project): Project;
 }

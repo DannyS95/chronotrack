@@ -23,10 +23,17 @@ final class Project extends BaseModel
         'description',
         'deadline',
         'user_id',
+        'status',
+        'completed_at',
+        'completion_source',
     ];
 
     protected $keyType = 'string';
     public $incrementing = false;
+
+    protected $casts = [
+        'completed_at' => 'datetime',
+    ];
 
     public function getRouteKeyName(): string
     {

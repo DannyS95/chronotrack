@@ -37,4 +37,8 @@ interface TaskRepositoryInterface
 
     /** @return Collection<int, Task> */
     public function getTasksByProject(string $projectId, string $userId): Collection;
+
+    public function countByProject(string $projectId, string $userId): int;
+
+    public function countIncompleteByProject(string $projectId, string $userId): int;
 }

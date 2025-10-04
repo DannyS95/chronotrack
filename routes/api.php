@@ -14,6 +14,7 @@ Route::middleware(['auth:sanctum', 'throttle:20,1'])->prefix('projects')->group(
     Route::get('{project}/tasks/{task}', [TaskController::class, 'show']);
     Route::patch('{project}/tasks/{task}', [TaskController::class, 'update']);
     Route::delete('{project}/tasks/{task}', [TaskController::class, 'destroy']);
+    Route::post('{project}/complete', [ProjectController::class, 'complete']);
     Route::delete('{project}', [ProjectController::class, 'destroy']);
     Route::get('/', [ProjectController::class, 'index']);
 });

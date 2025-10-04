@@ -3,6 +3,7 @@
 namespace App\Application\Goals\Services;
 
 use App\Application\Goals\ViewModels\GoalProgressViewModel;
+use App\Application\Projects\Services\ProjectLifecycleService;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 
@@ -11,6 +12,7 @@ final class GoalProgressService
     public function __construct(
         private readonly GoalRepositoryInterface $goalRepository,
         private readonly TaskRepositoryInterface $taskRepository,
+        private readonly ProjectLifecycleService $projectLifecycleService,
     ) {}
 
     public function handle(string $projectId, string $goalId, string $userId): GoalProgressViewModel
@@ -26,6 +28,7 @@ final class GoalProgressService
         if ($allComplete && ! $goalSnapshot->isComplete()) {
             $goalSnapshot = $this->goalRepository->updateStatusSnapshot($goalSnapshot->id, 'complete', now());
             $viewModel = $viewModel->withCompletionUpdated($goalSnapshot);
+            $this->projectLifecycleService->refresh($projectId, $userId);
         }
 
         return $viewModel;

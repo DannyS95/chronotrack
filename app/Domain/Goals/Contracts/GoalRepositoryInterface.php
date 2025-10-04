@@ -23,4 +23,8 @@ interface GoalRepositoryInterface
     public function getByProject(string $projectId, string $userId): Collection;
 
     public function delete(Goal $goal): void;
+
+    public function countByProject(string $projectId, string $userId): int;
+
+    public function countIncompleteByProject(string $projectId, string $userId): int;
 }

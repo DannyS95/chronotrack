@@ -124,4 +124,19 @@ final class TaskRepository implements TaskRepositoryInterface
             ->with('timers')
             ->get();
     }
+
+    public function countByProject(string $projectId, string $userId): int
+    {
+        return Task::query()
+            ->ownedBy($projectId, $userId)
+            ->count();
+    }
+
+    public function countIncompleteByProject(string $projectId, string $userId): int
+    {
+        return Task::query()
+            ->ownedBy($projectId, $userId)
+            ->where('status', '!=', 'done')
+            ->count();
+    }
 }

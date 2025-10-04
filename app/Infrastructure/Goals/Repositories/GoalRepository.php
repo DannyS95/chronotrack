@@ -64,4 +64,19 @@ class GoalRepository implements GoalRepositoryInterface
     {
         $goal->delete();
     }
+
+    public function countByProject(string $projectId, string $userId): int
+    {
+        return Goal::query()
+            ->ownedBy($projectId, $userId)
+            ->count();
+    }
+
+    public function countIncompleteByProject(string $projectId, string $userId): int
+    {
+        return Goal::query()
+            ->ownedBy($projectId, $userId)
+            ->where('status', '!=', 'complete')
+            ->count();
+    }
 }

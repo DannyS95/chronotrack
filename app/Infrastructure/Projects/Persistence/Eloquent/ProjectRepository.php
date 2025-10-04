@@ -2,10 +2,13 @@
 
 namespace App\Infrastructure\Projects\Persistence\Eloquent;
 
-use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Domain\Projects\Contracts\ProjectRepositoryInterface;
+use App\Domain\Projects\Enums\ProjectCompletionSource;
+use App\Domain\Projects\Enums\ProjectStatus;
+use App\Infrastructure\Projects\Eloquent\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 
 final class ProjectRepository implements ProjectRepositoryInterface
 {
@@ -40,5 +43,46 @@ final class ProjectRepository implements ProjectRepositoryInterface
     public function delete(Project $project): void
     {
         $project->delete();
+    }
+
+    public function markComplete(Project $project, string $source): Project
+    {
+        if ($source === ProjectCompletionSource::Automatic->value
+            && $project->completion_source === ProjectCompletionSource::Manual->value) {
+            return $project;
+        }
+
+        if (
+            $project->status === ProjectStatus::Complete->value
+            && $project->completion_source === $source
+            && $project->completed_at !== null
+        ) {
+            return $project;
+        }
+
+        $project->status = ProjectStatus::Complete->value;
+        $project->completion_source = $source;
+        $project->completed_at = Carbon::now();
+        $project->save();
+
+        return $project->refresh();
+    }
+
+    public function markActive(Project $project): Project
+    {
+        if ($project->completion_source === ProjectCompletionSource::Manual->value) {
+            return $project;
+        }
+
+        if ($project->status === ProjectStatus::Active->value && $project->completion_source === null) {
+            return $project;
+        }
+
+        $project->status = ProjectStatus::Active->value;
+        $project->completion_source = null;
+        $project->completed_at = null;
+        $project->save();
+
+        return $project->refresh();
     }
 }

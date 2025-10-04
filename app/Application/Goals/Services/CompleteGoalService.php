@@ -3,11 +3,12 @@
 namespace App\Application\Goals\Services;
 
 use App\Application\Goals\DTO\CompleteGoalDTO;
+use App\Application\Projects\Services\ProjectLifecycleService;
+use App\Domain\Common\Contracts\TransactionRunner;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Goals\ValueObjects\GoalSnapshot;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -17,6 +18,8 @@ final class CompleteGoalService
         private GoalRepositoryInterface $goalRepository,
         private TaskRepositoryInterface $taskRepository,
         private TimerRepositoryInterface $timerRepository,
+        private ProjectLifecycleService $projectLifecycleService,
+        private TransactionRunner $transactionRunner,
     ) {}
 
     /**
@@ -24,7 +27,7 @@ final class CompleteGoalService
      */
     public function handle(CompleteGoalDTO $dto): array
     {
-        return DB::transaction(function () use ($dto) {
+        $result = $this->transactionRunner->run(function () use ($dto) {
             $goal = $this->goalRepository->findOwned($dto->goalId, $dto->projectId, $dto->userId);
 
             $tasks = $this->taskRepository->getTasksByGoal($goal->id, $dto->projectId, $dto->userId);
@@ -72,5 +75,9 @@ final class CompleteGoalService
                 ],
             ];
         });
+
+        $this->projectLifecycleService->refresh($dto->projectId, $dto->userId);
+
+        return $result;
     }
 }
