@@ -19,8 +19,20 @@ class AttachTaskToGoalService
         // Verify goal ownership
         $goal = $this->goalRepository->findOwned($dto->goalId, $dto->projectId, $dto->userId);
 
+        if ($goal->status === 'complete') {
+            throw ValidationException::withMessages([
+                'goal_id' => ['Cannot attach tasks to a completed goal.'],
+            ]);
+        }
+
         // Verify task ownership
         $task = $this->taskRepository->findOwned($dto->taskId, $dto->projectId, $dto->userId);
+
+        if ($task->status === 'done') {
+            throw ValidationException::withMessages([
+                'task_id' => ['Cannot attach a completed task to a goal.'],
+            ]);
+        }
 
         if ($task->goal_id === $goal->id) {
             throw ValidationException::withMessages([

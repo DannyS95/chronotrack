@@ -23,7 +23,6 @@ final class TaskRepository implements TaskRepositoryInterface
     {
         $project = Project::query()
             ->where('id', $projectId)
-            ->where('user_id', $userId)
             ->firstOrFail();
 
         return Task::applyFilters($filters)
@@ -31,14 +30,6 @@ final class TaskRepository implements TaskRepositoryInterface
             ->with('timers')
             ->paginate($perPage)
             ->through(fn(Task $task) => TaskSnapshot::fromModel($task));
-    }
-
-    public function userOwnsTask(string $taskId, string $userId): bool
-    {
-        return Task::query()
-            ->ownedByUser($userId)
-            ->whereKey($taskId)
-            ->exists();
     }
 
     public function findOwned(string $taskId, string $projectId, string $userId): Task
@@ -115,6 +106,15 @@ final class TaskRepository implements TaskRepositoryInterface
                 'status' => 'done',
                 'last_activity_at' => now(),
             ]);
+    }
+
+    public function countIncompleteByGoal(string $goalId, string $projectId, string $userId): int
+    {
+        return Task::query()
+            ->where('project_id', $projectId)
+            ->where('goal_id', $goalId)
+            ->where('status', '!=', 'done')
+            ->count();
     }
 
     public function getTasksByProject(string $projectId, string $userId): Collection

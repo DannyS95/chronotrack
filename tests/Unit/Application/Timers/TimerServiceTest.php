@@ -4,12 +4,12 @@ namespace Tests\Unit\Application\Timers;
 
 use App\Application\Timers\Services\TimerService;
 use App\Domain\Common\Contracts\TransactionRunner;
-use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Timers\Exceptions\ActiveTimerExists;
 use App\Domain\Timers\Exceptions\ActiveTimerWithinGoalException;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
+use Illuminate\Validation\ValidationException;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 
@@ -26,7 +26,6 @@ final class TimerServiceTest extends TestCase
         $task->id = 'task-1';
         $task->goal_id = 'goal-1';
 
-        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $transactionRunner = new class implements TransactionRunner {
             public function run(callable $callback)
@@ -35,7 +34,6 @@ final class TimerServiceTest extends TestCase
             }
         };
 
-        $taskRepository->shouldReceive('userOwnsTask')->once()->with('task-1', 'user-1')->andReturn(true);
         $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
 
         $activeTimer = new Timer();
@@ -43,14 +41,14 @@ final class TimerServiceTest extends TestCase
 
         $timerRepository->shouldReceive('findActiveForGoalLock')
             ->once()
-            ->with('goal-1', 'user-1', 'task-1')
+            ->with('goal-1', '1', 'task-1')
             ->andReturn($activeTimer);
 
-        $service = new TimerService($timerRepository, $taskRepository, $transactionRunner);
+        $service = new TimerService($timerRepository, $transactionRunner);
 
         $this->expectException(ActiveTimerWithinGoalException::class);
 
-        $service->start($task, 'user-1');
+        $service->start($task, '1');
     }
 
     public function test_start_fails_when_unscoped_task_already_has_active_timer(): void
@@ -59,7 +57,6 @@ final class TimerServiceTest extends TestCase
         $task->id = 'task-2';
         $task->goal_id = null;
 
-        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $transactionRunner = new class implements TransactionRunner {
             public function run(callable $callback)
@@ -68,7 +65,6 @@ final class TimerServiceTest extends TestCase
             }
         };
 
-        $taskRepository->shouldReceive('userOwnsTask')->once()->with('task-2', 'user-1')->andReturn(true);
         $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-2')->andReturnNull();
         $timerRepository->shouldReceive('findActiveForGoalLock')->never();
 
@@ -77,14 +73,14 @@ final class TimerServiceTest extends TestCase
 
         $timerRepository->shouldReceive('findActiveWithoutGoalForUserLock')
             ->once()
-            ->with('user-1', 'task-2')
+            ->with('1', 'task-2')
             ->andReturn($activeTimer);
 
-        $service = new TimerService($timerRepository, $taskRepository, $transactionRunner);
+        $service = new TimerService($timerRepository, $transactionRunner);
 
         $this->expectException(ActiveTimerExists::class);
 
-        $service->start($task, 'user-1');
+        $service->start($task, '1');
     }
 
     public function test_start_creates_timer_when_no_conflicts_present(): void
@@ -93,7 +89,6 @@ final class TimerServiceTest extends TestCase
         $task->id = 'task-3';
         $task->goal_id = 'goal-3';
 
-        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $transactionRunner = new class implements TransactionRunner {
             public function run(callable $callback)
@@ -102,9 +97,8 @@ final class TimerServiceTest extends TestCase
             }
         };
 
-        $taskRepository->shouldReceive('userOwnsTask')->once()->with('task-3', 'user-1')->andReturn(true);
         $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-3')->andReturnNull();
-        $timerRepository->shouldReceive('findActiveForGoalLock')->once()->with('goal-3', 'user-1', 'task-3')->andReturnNull();
+        $timerRepository->shouldReceive('findActiveForGoalLock')->once()->with('goal-3', '1', 'task-3')->andReturnNull();
         $timerRepository->shouldReceive('findActiveWithoutGoalForUserLock')->never();
 
         $createdTimer = new Timer();
@@ -112,13 +106,36 @@ final class TimerServiceTest extends TestCase
 
         $timerRepository->shouldReceive('createRunning')
             ->once()
-            ->with('task-3')
+            ->with('task-3', '1')
             ->andReturn($createdTimer);
 
-        $service = new TimerService($timerRepository, $taskRepository, $transactionRunner);
+        $service = new TimerService($timerRepository, $transactionRunner);
 
-        $result = $service->start($task, 'user-1');
+        $result = $service->start($task, '1');
 
         $this->assertSame($createdTimer, $result);
+    }
+
+    public function test_start_fails_when_task_already_completed(): void
+    {
+        $task = new Task();
+        $task->id = 'task-4';
+        $task->status = 'done';
+
+        $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
+        $timerRepository->shouldNotReceive('findActiveForTaskLock');
+
+        $transactionRunner = new class implements TransactionRunner {
+            public function run(callable $callback)
+            {
+                return $callback();
+            }
+        };
+
+        $service = new TimerService($timerRepository, $transactionRunner);
+
+        $this->expectException(ValidationException::class);
+
+        $service->start($task, '1');
     }
 }

@@ -31,6 +31,9 @@ class TaskController extends Controller
 
     public function show(Project $project, Task $task): JsonResponse
     {
+        $this->assertTaskBelongsToProject($project, $task);
+        $this->authorize('view', $task);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -41,6 +44,8 @@ class TaskController extends Controller
 
     public function store(StoreTaskRequest $request, Project $project): JsonResponse
     {
+        $this->authorize('create', [Task::class, $project]);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -60,6 +65,8 @@ class TaskController extends Controller
 
     public function index(TaskFilterRequest $request, Project $project): JsonResponse
     {
+        $this->authorize('viewAny', [Task::class, $project]);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -76,6 +83,9 @@ class TaskController extends Controller
 
     public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
     {
+        $this->assertTaskBelongsToProject($project, $task);
+        $this->authorize('update', $task);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -96,6 +106,9 @@ class TaskController extends Controller
 
     public function destroy(Project $project, Task $task): JsonResponse
     {
+        $this->assertTaskBelongsToProject($project, $task);
+        $this->authorize('delete', $task);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -110,5 +123,10 @@ class TaskController extends Controller
         return response()->json([
             'message' => 'Task deleted successfully.',
         ]);
+    }
+
+    private function assertTaskBelongsToProject(Project $project, Task $task): void
+    {
+        abort_unless($task->project_id === $project->id, 404);
     }
 }

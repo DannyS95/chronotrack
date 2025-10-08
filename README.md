@@ -29,6 +29,25 @@ Everything is authenticated with Laravel Sanctum, so the same token secures the 
 
 ---
 
+## 🧱 Project → Goal → Task → Timer Hierarchy
+
+- **Projects** are the top-level container. Every goal, task, and timer is scoped to a single project owner.
+- **Goals** live under projects and represent the outcome you’re chasing. They only care about the tasks attached to them.
+- **Tasks** always belong to a project and may optionally belong to a goal. A task can be attached or detached from a goal, but:
+  - You can’t attach tasks to goals that are already complete.
+  - Completed tasks can’t be attached to any goal.
+- **Timers** belong to tasks. A task can have many timers (historical sessions plus the current run), but the service stops any active timer before marking the task `done`.
+
+### Completion Rules
+
+- Marking a task `done` automatically stops its active timer.
+- When the last remaining task attached to a goal is marked `done`, the goal is automatically marked `complete`. You don’t have to call the goal completion endpoint manually—the domain service keeps goals and tasks in sync.
+- Project status is refreshed after every task update, so a project flips back to *active* or up to *complete* based on its goals and tasks.
+
+Put simply: **project → goals → tasks → timers** form a strict cascade. Completing work at the task level ripples up to goals and projects, while timers ensure time tracking stays accurate at the leaf node.
+
+---
+
 ## 🧭 Architecture in Plain Language
 
 ChronoTrack follows Clean Architecture to keep business rules clear and testable:

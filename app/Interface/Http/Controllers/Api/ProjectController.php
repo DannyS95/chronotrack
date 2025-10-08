@@ -20,6 +20,8 @@ class ProjectController extends Controller
 {
     public function store(StoreProjectRequest $request): JsonResponse
     {
+        $this->authorize('create', Project::class);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -38,6 +40,8 @@ class ProjectController extends Controller
 
     public function index(ProjectFilterRequest $request): JsonResponse
     {
+        $this->authorize('viewAny', Project::class);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -53,6 +57,8 @@ class ProjectController extends Controller
 
     public function destroy(Project $project): JsonResponse
     {
+        $this->authorize('delete', $project);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -71,6 +77,8 @@ class ProjectController extends Controller
 
     public function complete(Project $project): JsonResponse
     {
+        $this->authorize('complete', $project);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 

@@ -76,7 +76,9 @@ abstract class BaseModel extends Model
             'after'  => $query->where($column, '>=', $value),
             'before' => $query->where($column, '<=', $value),
             'date'   => $query->whereDate($column, '=', $value),
-            'isnull'  => $query->whereNull($column),
+            'isnull'  => $value === null
+                ? $query
+                : ($value ? $query->whereNull($column) : $query->whereNotNull($column)),
             'notnull' => $query->whereNotNull($column),
             default  => throw new InvalidArgumentException("Unsupported operator: {$operator}"),
         };

@@ -53,6 +53,18 @@ final class UpdateTaskService
             if ($shouldCompleteTask) {
                 $this->timerRepository->stopActiveTimerForTask($task->id);
 
+                if ($task->goal_id !== null) {
+                    $remaining = $this->taskRepository->countIncompleteByGoal(
+                        $task->goal_id,
+                        $dto->project_id,
+                        $dto->user_id,
+                    );
+
+                    if ($remaining === 0) {
+                        $this->goalRepository->updateStatusSnapshot($task->goal_id, 'complete', now());
+                    }
+                }
+
                 $snapshot = $this->taskRepository->findSnapshot(
                     $task->id,
                     $dto->project_id,

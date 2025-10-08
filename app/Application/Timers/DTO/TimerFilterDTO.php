@@ -17,19 +17,15 @@ class TimerFilterDTO
 
     public function toArray(): array
     {
-        return [
-            'id'          => $this->id,
-            'task_id'     => $this->taskId,
-            'started_at'  => [
-                'after'  => $this->startedAfter,
-                'before' => $this->startedBefore,
-            ],
-            'stopped_at'  => [
-                'after'  => $this->stoppedAfter,
-                'before' => $this->stoppedBefore,
-            ],
-            'active'      => $this->active,
-        ];
+        return array_filter([
+            'id'              => $this->id,
+            'task_id'         => $this->taskId,
+            'started_after'   => $this->startedAfter,
+            'started_before'  => $this->startedBefore,
+            'stopped_after'   => $this->stoppedAfter,
+            'stopped_before'  => $this->stoppedBefore,
+            'active'          => $this->active,
+        ], static fn($value) => $value !== null);
     }
 
     public static function fromArray(array $attributes): self
@@ -37,10 +33,10 @@ class TimerFilterDTO
         return new self(
             id: $attributes['id'] ?? null,
             taskId: $attributes['task_id'] ?? null,
-            startedAfter: $attributes['started_after'] ?? null,
+            startedAfter: $attributes['started_after'] ?? $attributes['started_at'] ?? null,
             startedBefore: $attributes['started_before'] ?? null,
             stoppedAfter: $attributes['stopped_after'] ?? null,
-            stoppedBefore: $attributes['stopped_before'] ?? null,
+            stoppedBefore: $attributes['stopped_before'] ?? $attributes['stopped_at'] ?? null,
             active: $attributes['active'] ?? null,
             userId: $attributes['userId'] ?? ($attributes['user_id'] ?? null),
         );

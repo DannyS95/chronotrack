@@ -7,6 +7,7 @@ use App\Application\Tasks\DTO\UpdateTaskDTO;
 use App\Application\Tasks\Services\UpdateTaskService;
 use App\Domain\Common\Contracts\TransactionRunner;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
+use App\Domain\Goals\ValueObjects\GoalSnapshot;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Tasks\ValueObjects\TaskSnapshot;
@@ -47,6 +48,7 @@ final class UpdateTaskServiceTest extends TestCase
             ->andReturn($task);
 
         $goalRepository->shouldReceive('findOwned')->never();
+        $taskRepository->shouldReceive('countIncompleteByGoal')->never();
 
         $taskRepository->shouldReceive('updateSnapshot')
             ->once()
@@ -108,6 +110,7 @@ final class UpdateTaskServiceTest extends TestCase
             ->andReturn($task);
 
         $goalRepository->shouldReceive('findOwned')->never();
+        $taskRepository->shouldReceive('countIncompleteByGoal')->never();
 
         $updatedSnapshot = $this->makeSnapshot('task-2', 'project-1', null, 'active');
 
@@ -136,6 +139,78 @@ final class UpdateTaskServiceTest extends TestCase
         $this->assertSame('active', $result->toArray()['status']);
     }
 
+    public function test_it_completes_goal_when_last_task_marked_done(): void
+    {
+        $task = new Task();
+        $task->id = 'task-3';
+        $task->project_id = 'project-1';
+        $task->goal_id = 'goal-1';
+        $task->status = 'active';
+
+        $dto = new UpdateTaskDTO('project-1', 'task-3', 'user-1', ['status' => 'done']);
+
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $goalRepository = Mockery::mock(GoalRepositoryInterface::class);
+        $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
+        $projectLifecycle = Mockery::mock(ProjectLifecycleService::class);
+        $transactionRunner = new class implements TransactionRunner {
+            public function run(callable $callback)
+            {
+                return $callback();
+            }
+        };
+
+        $taskRepository->shouldReceive('findOwned')
+            ->once()
+            ->with('task-3', 'project-1', 'user-1')
+            ->andReturn($task);
+
+        $goalRepository->shouldReceive('findOwned')->never();
+
+        $taskRepository->shouldReceive('updateSnapshot')
+            ->once()
+            ->with($task, ['status' => 'done'])
+            ->andReturn($this->makeSnapshot('task-3', 'project-1', 'goal-1', 'done'));
+
+        $timerRepository->shouldReceive('stopActiveTimerForTask')
+            ->once()
+            ->with('task-3')
+            ->andReturn(null);
+
+        $taskRepository->shouldReceive('countIncompleteByGoal')
+            ->once()
+            ->with('goal-1', 'project-1', 'user-1')
+            ->andReturn(0);
+
+        $goalRepository->shouldReceive('updateStatusSnapshot')
+            ->once()
+            ->with('goal-1', 'complete', Mockery::type(\DateTimeInterface::class))
+            ->andReturn($this->makeGoalSnapshot('goal-1', 'project-1', 'complete'));
+
+        $finalSnapshot = $this->makeSnapshot('task-3', 'project-1', 'goal-1', 'done');
+
+        $taskRepository->shouldReceive('findSnapshot')
+            ->once()
+            ->with('task-3', 'project-1', 'user-1')
+            ->andReturn($finalSnapshot);
+
+        $projectLifecycle->shouldReceive('refresh')
+            ->once()
+            ->with('project-1', 'user-1');
+
+        $service = new UpdateTaskService(
+            $taskRepository,
+            $goalRepository,
+            $timerRepository,
+            $projectLifecycle,
+            $transactionRunner,
+        );
+
+        $result = $service->handle($dto);
+
+        $this->assertSame('done', $result->toArray()['status']);
+    }
+
     private function makeSnapshot(string $taskId, string $projectId, ?string $goalId, string $status): TaskSnapshot
     {
         return new TaskSnapshot(
@@ -152,6 +227,18 @@ final class UpdateTaskServiceTest extends TestCase
             activeSince: null,
             activeDurationSeconds: 0,
             activeDurationHuman: null,
+        );
+    }
+
+    private function makeGoalSnapshot(string $goalId, string $projectId, string $status): GoalSnapshot
+    {
+        return new GoalSnapshot(
+            id: $goalId,
+            projectId: $projectId,
+            title: 'Goal',
+            status: $status,
+            description: null,
+            completedAt: null,
         );
     }
 }

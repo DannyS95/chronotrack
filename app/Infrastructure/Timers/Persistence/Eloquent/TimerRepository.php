@@ -49,14 +49,15 @@ final class TimerRepository implements TimerRepositoryInterface
             ->first();
     }
 
-    public function createRunning(string $taskId): Timer
+    public function createRunning(string $taskId, int|string $userId): Timer
     {
         $timer = new Timer();
         $timer->task_id = $taskId;
+        $timer->user_id = $userId;
         $timer->started_at = now();
         $timer->save();
 
-        return $timer;
+        return $timer->fresh();
     }
 
     public function stopActiveTimerForTask(string $taskId): ?Timer
@@ -140,10 +141,8 @@ final class TimerRepository implements TimerRepositoryInterface
 
     public function list(array $filters): LengthAwarePaginator
     {
-        return Timer::query()
-            ->tap(fn($query) => Timer::applyFilters($filters)
-                ->mergeConstraintsFrom($query->getModel()->newEloquentBuilder($query->getQuery()))
-            )
+        return Timer::applyFilters($filters)
+            ->with('task')
             ->orderByDesc('started_at')
             ->paginate(20);
     }

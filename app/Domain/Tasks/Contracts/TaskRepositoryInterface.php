@@ -13,8 +13,6 @@ interface TaskRepositoryInterface
 
     public function paginateSnapshots(array $filters, string $userId, string $projectId, int $perPage): LengthAwarePaginator;
 
-    public function userOwnsTask(string $taskId, string $userId): bool;
-
     public function findOwned(string $taskId, string $projectId, string $userId): Task;
 
     public function findSnapshot(string $taskId, string $projectId, string $userId): TaskSnapshot;
@@ -34,6 +32,8 @@ interface TaskRepositoryInterface
 
     /** @param array<int, string> $taskIds */
     public function markTasksAsComplete(array $taskIds): int;
+
+    public function countIncompleteByGoal(string $goalId, string $projectId, string $userId): int;
 
     /** @return Collection<int, Task> */
     public function getTasksByProject(string $projectId, string $userId): Collection;

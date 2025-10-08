@@ -3,29 +3,28 @@
 namespace App\Application\Timers\Services;
 
 use App\Domain\Common\Contracts\TransactionRunner;
-use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
-use App\Domain\Tasks\Exceptions\NotOwnerOfTask;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Timers\Exceptions\ActiveTimerExists;
 use App\Domain\Timers\Exceptions\ActiveTimerWithinGoalException;
 use App\Domain\Timers\Exceptions\NoActiveTimerOnTask;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
+use Illuminate\Validation\ValidationException;
 
 final class TimerService
 {
     public function __construct(
         private readonly TimerRepositoryInterface $timerRepository,
-        private readonly TaskRepositoryInterface $taskRepository,
         private readonly TransactionRunner $tx,
     ) {}
 
-    public function start(Task $task, string $userId): Timer
+    public function start(Task $task, int|string $userId): Timer
     {
         return $this->tx->run(function () use ($task, $userId) {
-            # double check user owns task
-            if (! $this->taskRepository->userOwnsTask($task->id, $userId)) {
-                throw new NotOwnerOfTask();
+            if ($task->status === 'done') {
+                throw ValidationException::withMessages([
+                    'task_id' => ['Cannot start a timer on a completed task.'],
+                ]);
             }
 
             $activeForTask = $this->timerRepository->findActiveForTaskLock($task->id);
@@ -47,17 +46,13 @@ final class TimerService
                 }
             }
 
-            return $this->timerRepository->createRunning($task->id);
+            return $this->timerRepository->createRunning($task->id, $userId);
         });
     }
 
     public function stop(Task $task, string $userId): Timer
     {
         return $this->tx->run(function () use ($task, $userId) {
-            if (! $this->taskRepository->userOwnsTask($task->id, $userId)) {
-                throw new NotOwnerOfTask();
-            }
-
             $stopped = $this->timerRepository->stopActiveTimerForTask($task->id);
             if (! $stopped) {
                 throw new NoActiveTimerOnTask();

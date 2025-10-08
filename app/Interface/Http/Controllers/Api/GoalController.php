@@ -39,6 +39,8 @@ final class GoalController extends Controller
      */
     public function index(GoalFilterRequest $request, Project $project): JsonResponse
     {
+        $this->authorize('viewAny', [Goal::class, $project]);
+
         $dto = GoalFilterDTO::fromArray([
             ...$request->validated(),
         ]);
@@ -53,6 +55,8 @@ final class GoalController extends Controller
      */
     public function store(StoreGoalRequest $request, Project $project)
     {
+        $this->authorize('create', [Goal::class, $project]);
+
         $dto = CreateGoalDTO::fromArray([
             ...$request->validated(),
             'project_id' => $project->id,
@@ -66,6 +70,9 @@ final class GoalController extends Controller
 
     public function show(Project $project, Goal $goal): JsonResponse
     {
+        $this->assertGoalBelongsToProject($project, $goal);
+        $this->authorize('view', $goal);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -80,6 +87,9 @@ final class GoalController extends Controller
 
     public function attach(Request $request, Project $project, Goal $goal, Task $task): JsonResponse
     {
+        $this->assertGoalBelongsToProject($project, $goal);
+        $this->authorize('attachTask', [$goal, $project]);
+
         $dto = new AttachTaskToGoalDTO(
             projectId: $project->id,
             goalId: $goal->id,
@@ -94,6 +104,9 @@ final class GoalController extends Controller
 
     public function detach(Request $request, Project $project, Goal $goal, Task $task): JsonResponse
     {
+        $this->assertGoalBelongsToProject($project, $goal);
+        $this->authorize('detachTask', [$goal, $project]);
+
         $dto = new AttachTaskToGoalDTO(
             projectId: $project->id,
             goalId: $goal->id,
@@ -108,6 +121,9 @@ final class GoalController extends Controller
 
     public function progress(Project $project, Goal $goal): JsonResponse
     {
+        $this->assertGoalBelongsToProject($project, $goal);
+        $this->authorize('progress', $goal);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -122,6 +138,9 @@ final class GoalController extends Controller
 
     public function complete(Project $project, Goal $goal): JsonResponse
     {
+        $this->assertGoalBelongsToProject($project, $goal);
+        $this->authorize('complete', $goal);
+
         /** @var \Illuminate\Contracts\Auth\Guard $auth */
         $auth = auth();
 
@@ -134,5 +153,10 @@ final class GoalController extends Controller
         $result = $this->completeGoalService->handle($dto);
 
         return response()->json($result);
+    }
+
+    private function assertGoalBelongsToProject(Project $project, Goal $goal): void
+    {
+        abort_unless($goal->project_id === $project->id, 404);
     }
 }

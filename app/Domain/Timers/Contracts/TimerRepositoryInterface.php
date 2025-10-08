@@ -13,7 +13,7 @@ interface TimerRepositoryInterface
 
     public function findActiveWithoutGoalForUserLock(string $userId, ?string $excludingTaskId = null): ?Timer;
 
-    public function createRunning(string $taskId): Timer;
+    public function createRunning(string $taskId, int|string $userId): Timer;
 
     public function stopActiveTimerForTask(string $taskId): ?Timer;
 
