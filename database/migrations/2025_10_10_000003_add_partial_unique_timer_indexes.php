@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,27 +11,28 @@ return new class extends Migration
         Schema::table('timers', function (Blueprint $table) {
             $table->dropUnique('timers_user_active_unique');
             $table->dropUnique('timers_task_active_unique');
+
+            $table->unsignedBigInteger('user_active_key')
+                ->nullable()
+                ->virtualAs('case when stopped_at IS NULL then user_id else NULL end');
+            $table->unique('user_active_key', 'timers_user_active_unique');
+
+            $table->string('task_active_key', 36)
+                ->nullable()
+                ->virtualAs('case when stopped_at IS NULL then task_id else NULL end');
+            $table->unique('task_active_key', 'timers_task_active_unique');
         });
-
-        DB::statement(<<<'SQL'
-            CREATE UNIQUE INDEX timers_user_active_unique
-            ON timers (user_id)
-            WHERE stopped_at IS NULL AND user_id IS NOT NULL
-        SQL);
-
-        DB::statement(<<<'SQL'
-            CREATE UNIQUE INDEX timers_task_active_unique
-            ON timers (task_id)
-            WHERE stopped_at IS NULL
-        SQL);
     }
 
     public function down(): void
     {
-        DB::statement('DROP INDEX IF EXISTS timers_user_active_unique');
-        DB::statement('DROP INDEX IF EXISTS timers_task_active_unique');
-
         Schema::table('timers', function (Blueprint $table) {
+            $table->dropUnique('timers_user_active_unique');
+            $table->dropColumn('user_active_key');
+
+            $table->dropUnique('timers_task_active_unique');
+            $table->dropColumn('task_active_key');
+
             $table->unique(['user_id', 'stopped_at'], 'timers_user_active_unique');
             $table->unique(['task_id', 'stopped_at'], 'timers_task_active_unique');
         });
