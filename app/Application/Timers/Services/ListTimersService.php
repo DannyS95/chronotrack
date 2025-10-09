@@ -3,9 +3,8 @@
 namespace App\Application\Timers\Services;
 
 use App\Application\Timers\DTO\TimerFilterDTO;
-use App\Application\Timers\ViewModels\TimerViewModel;
+use App\Application\Timers\ViewModels\TimerCollectionViewModel;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class ListTimersService
 {
@@ -13,10 +12,10 @@ final class ListTimersService
         private readonly TimerRepositoryInterface $timerRepository
     ) {}
 
-    public function handle(TimerFilterDTO $dto): LengthAwarePaginator
+    public function handle(TimerFilterDTO $dto): array
     {
-        return $this->timerRepository
-            ->list($dto->toArray())
-            ->through(fn($timer) => TimerViewModel::fromModel($timer)->toArray());
+        $paginator = $this->timerRepository->list($dto->toArray());
+
+        return TimerCollectionViewModel::fromPaginator($paginator);
     }
 }

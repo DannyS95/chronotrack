@@ -23,6 +23,9 @@ Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
     Route::post('{task}/timers/start', [TimerController::class, 'start'])
         ->name('api.tasks.timers.start');
 
+    Route::post('{task}/timers/pause', [TimerController::class, 'pause'])
+        ->name('api.tasks.timers.pause');
+
     Route::post('{task}/timers/stop', [TimerController::class, 'stop'])
         ->name('api.tasks.timers.stop');
 

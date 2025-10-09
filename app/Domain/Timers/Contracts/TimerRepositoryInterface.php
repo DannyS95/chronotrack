@@ -4,6 +4,7 @@ namespace App\Domain\Timers\Contracts;
 
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 interface TimerRepositoryInterface
 {
@@ -11,9 +12,14 @@ interface TimerRepositoryInterface
 
     public function findActiveForGoalLock(string $goalId, string $userId, ?string $excludingTaskId = null): ?Timer;
 
-    public function findActiveWithoutGoalForUserLock(string $userId, ?string $excludingTaskId = null): ?Timer;
+    /** @return Collection<int, Timer> */
+    public function findRunningTimersForUser(string $userId, ?string $excludingTaskId = null): Collection;
 
     public function createRunning(string $taskId, int|string $userId): Timer;
+
+    public function pauseActiveTimerForTask(string $taskId): ?Timer;
+
+    public function resumeTimer(Timer $timer): Timer;
 
     public function stopActiveTimerForTask(string $taskId): ?Timer;
 

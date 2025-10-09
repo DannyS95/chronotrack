@@ -48,6 +48,11 @@ final class TimerPolicy
         return $this->ownsTask($user, $task);
     }
 
+    public function pause(User $user, Task $task): bool
+    {
+        return $this->ownsTask($user, $task);
+    }
+
     public function stop(User $user, Task $task): bool
     {
         return $this->ownsTask($user, $task);

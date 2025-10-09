@@ -12,6 +12,7 @@ use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Tasks\ValueObjects\TaskSnapshot;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
+use Carbon\Carbon;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 
@@ -28,6 +29,7 @@ final class UpdateTaskServiceTest extends TestCase
         $task->id = 'task-1';
         $task->project_id = 'project-1';
         $task->status = 'active';
+        $task->created_at = Carbon::now()->subMinute();
 
         $dto = new UpdateTaskDTO('project-1', 'task-1', 'user-1', ['status' => 'done']);
 
@@ -52,7 +54,12 @@ final class UpdateTaskServiceTest extends TestCase
 
         $taskRepository->shouldReceive('updateSnapshot')
             ->once()
-            ->with($task, ['status' => 'done'])
+            ->with($task, Mockery::on(function (array $attributes) {
+                return $attributes['status'] === 'done'
+                    && isset($attributes['last_activity_at'])
+                    && isset($attributes['time_spent_seconds'])
+                    && $attributes['time_spent_seconds'] > 0;
+            }))
             ->andReturn($this->makeSnapshot('task-1', 'project-1', null, 'done'));
 
         $timerRepository->shouldReceive('stopActiveTimerForTask')
@@ -146,6 +153,7 @@ final class UpdateTaskServiceTest extends TestCase
         $task->project_id = 'project-1';
         $task->goal_id = 'goal-1';
         $task->status = 'active';
+        $task->created_at = Carbon::now()->subMinutes(2);
 
         $dto = new UpdateTaskDTO('project-1', 'task-3', 'user-1', ['status' => 'done']);
 
@@ -169,7 +177,10 @@ final class UpdateTaskServiceTest extends TestCase
 
         $taskRepository->shouldReceive('updateSnapshot')
             ->once()
-            ->with($task, ['status' => 'done'])
+            ->with($task, Mockery::on(function (array $attributes) {
+                return $attributes['status'] === 'done'
+                    && isset($attributes['time_spent_seconds']);
+            }))
             ->andReturn($this->makeSnapshot('task-3', 'project-1', 'goal-1', 'done'));
 
         $timerRepository->shouldReceive('stopActiveTimerForTask')
@@ -227,6 +238,9 @@ final class UpdateTaskServiceTest extends TestCase
             activeSince: null,
             activeDurationSeconds: 0,
             activeDurationHuman: null,
+            hasActiveTimers: false,
+            timeSpentSeconds: 0,
+            timeSpentHuman: null,
         );
     }
 

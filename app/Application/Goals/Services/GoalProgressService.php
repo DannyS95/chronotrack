@@ -22,13 +22,8 @@ final class GoalProgressService
 
         $viewModel = GoalProgressViewModel::fromSnapshots($goalSnapshot, $taskSnapshots);
 
-        $allComplete = $viewModel->totalTasks() > 0
-            && $viewModel->completedTasks() === $viewModel->totalTasks();
-
-        if ($allComplete && ! $goalSnapshot->isComplete()) {
-            $goalSnapshot = $this->goalRepository->updateStatusSnapshot($goalSnapshot->id, 'complete', now());
-            $viewModel = $viewModel->withCompletionUpdated($goalSnapshot);
-            $this->projectLifecycleService->refresh($projectId, $userId);
+        if ($viewModel->totalTasks() > 0 && $viewModel->completedTasks() === $viewModel->totalTasks()) {
+            return $viewModel->withProgressForcedToHundred();
         }
 
         return $viewModel;

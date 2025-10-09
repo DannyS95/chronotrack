@@ -29,6 +29,7 @@ final class Task extends BaseModel
         'due_at',
         'last_activity_at',
         'status',
+        'time_spent_seconds',
     ];
 
     protected $keyType = 'string';

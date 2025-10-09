@@ -31,13 +31,17 @@ final class TimerDurations
                 return $carry + max(0, (int) $timer->duration);
             }
 
-            $stoppedAt = $timer->stopped_at ? Carbon::parse($timer->stopped_at) : $now;
+            $effectiveStop = $timer->paused_at
+                ? Carbon::parse($timer->paused_at)
+                : ($timer->stopped_at ? Carbon::parse($timer->stopped_at) : $now);
 
-            $diff = $stoppedAt->greaterThan($startedAt)
-                ? $stoppedAt->diffInSeconds($startedAt)
+            $diff = $effectiveStop->greaterThan($startedAt)
+                ? $effectiveStop->diffInSeconds($startedAt)
                 : 0;
 
-            return $carry + $diff;
+            $diff -= (int) $timer->paused_total;
+
+            return $carry + max(0, $diff);
         }, 0);
     }
 

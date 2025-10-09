@@ -74,7 +74,7 @@ final class TaskRepository implements TaskRepositoryInterface
             ->ownedBy($projectId, $userId)
             ->whereKey($goalId)
             ->with(['tasks' => fn($q) => $q
-                ->select('id', 'title', 'description', 'status', 'goal_id', 'project_id', 'due_at', 'last_activity_at', 'created_at', 'updated_at')
+                ->select('id', 'title', 'description', 'status', 'goal_id', 'project_id', 'due_at', 'last_activity_at', 'time_spent_seconds', 'created_at', 'updated_at')
                 ->with('timers')
                 ->orderBy('created_at')
             ])

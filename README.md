@@ -18,9 +18,9 @@ ChronoTrack is a calm command center for your projects. Capture every idea, turn
 
 1. **Create a project** – `POST /projects`
 2. **Add tasks** – `POST /projects/{project}/tasks`
-3. **Group tasks under goals** – `POST /projects/{project}/goals/{goal}/tasks/{task}` (attach) and remove when needed
+3. **Group tasks under goals** – `POST /projects/{project}/goals/{goal}/tasks/{task}` (attach) with only active tasks; remove when needed
 4. **Start working** – `POST /tasks/{task}/timers/start`
-5. **Pause or finish** – `POST /tasks/{task}/timers/stop` then patch the task status to `done`
+5. **Pause or finish** – `POST /tasks/{task}/timers/pause` to pause, `POST /tasks/{task}/timers/stop` then patch the task status to `done`
 6. **Stay informed**
    - Task details: `GET /projects/{project}/tasks/{task}`
    - Goal progress: `GET /projects/{project}/goals/{goal}/progress`
@@ -35,14 +35,14 @@ Everything is authenticated with Laravel Sanctum, so the same token secures the 
 - **Goals** live under projects and represent the outcome you’re chasing. They only care about the tasks attached to them.
 - **Tasks** always belong to a project and may optionally belong to a goal. A task can be attached or detached from a goal, but:
   - You can’t attach tasks to goals that are already complete.
-  - Completed tasks can’t be attached to any goal.
+  - Completed tasks can’t be attached to any goal—tasks must remain active to be linked.
 - **Timers** belong to tasks. A task can have many timers (historical sessions plus the current run), but the service stops any active timer before marking the task `done`.
 
 ### Completion Rules
 
 - Marking a task `done` automatically stops its active timer.
 - When the last remaining task attached to a goal is marked `done`, the goal is automatically marked `complete`. You don’t have to call the goal completion endpoint manually—the domain service keeps goals and tasks in sync.
-- Project status is refreshed after every task update, so a project flips back to *active* or up to *complete* based on its goals and tasks.
+- Project status and progress metrics are recalculated after every task update, so projects immediately reflect the latest active/completed state of their goals and tasks.
 
 Put simply: **project → goals → tasks → timers** form a strict cascade. Completing work at the task level ripples up to goals and projects, while timers ensure time tracking stays accurate at the leaf node.
 
@@ -81,8 +81,8 @@ Common building blocks you will spot:
 |-----------|------------|---------------|
 | Projects  | Create and list projects scoped per user | `POST /projects`, `GET /projects` |
 | Tasks     | Create, list, view, update, delete; return timer-aware snapshots | `POST /projects/{project}/tasks`, `GET /projects/{project}/tasks`, `GET /projects/{project}/tasks/{task}`, `PATCH /projects/{project}/tasks/{task}`, `DELETE ...` |
-| Goals     | List, create, attach/detach tasks, view progress | `GET /projects/{project}/goals`, `POST ...`, `POST /projects/{project}/goals/{goal}/tasks/{task}`, `GET .../progress` |
-| Timers    | Start/stop per task, list user-active timers with project context | `POST /tasks/{task}/timers/start`, `POST /tasks/{task}/timers/stop`, `GET /tasks/{task}/timers`, `GET /timers/active` |
+| Goals     | List, create, attach/detach active tasks, view progress | `GET /projects/{project}/goals`, `POST ...`, `POST /projects/{project}/goals/{goal}/tasks/{task}`, `GET .../progress` |
+| Timers    | Start/pause/stop per task, list user-active timers with project context | `POST /tasks/{task}/timers/start`, `POST /tasks/{task}/timers/pause`, `POST /tasks/{task}/timers/stop`, `GET /tasks/{task}/timers`, `GET /timers/active` |
 
 Under the hood, timers are recalculated safely thanks to shared helper utilities (`TimerDurations`) that aggregate historical durations plus live running time.
 

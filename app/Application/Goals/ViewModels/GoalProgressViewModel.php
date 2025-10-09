@@ -77,6 +77,22 @@ final class GoalProgressViewModel
         );
     }
 
+    public function withProgressForcedToHundred(): self
+    {
+        return new self(
+            goalId: $this->goalId,
+            status: $this->status,
+            completedAt: $this->completedAt,
+            totalTasks: $this->totalTasks,
+            completedTasks: $this->completedTasks,
+            percentComplete: $this->totalTasks > 0 ? 100 : $this->percentComplete,
+            elapsedSeconds: $this->elapsedSeconds,
+            elapsedHuman: $this->elapsedHuman,
+            activeSince: $this->activeSince,
+            tasks: $this->tasks,
+        );
+    }
+
     public function status(): ?string
     {
         return $this->status;
