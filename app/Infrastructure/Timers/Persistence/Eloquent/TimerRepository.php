@@ -104,6 +104,33 @@ final class TimerRepository implements TimerRepositoryInterface
         return $timer->fresh('task');
     }
 
+    /**
+     * Fetch the currently running timer for the user, if any, applying a lock for safety.
+     */
+    public function findActiveTimerForUserLock(string $userId): ?Timer
+    {
+        return Timer::query()
+            ->with('task')
+            ->whereNull('stopped_at')
+            ->where(function (Builder $query) use ($userId) {
+                $query->where('user_id', $userId)
+                    ->orWhere(function ($query) use ($userId) {
+                        $query->whereNull('user_id')
+                            ->whereHas('task.project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
+                    });
+            })
+            ->latest('started_at')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function findTimerById(string $timerId): ?Timer
+    {
+        return Timer::query()
+            ->with('task')
+            ->find($timerId);
+    }
+
     public function stopActiveTimerForTask(string $taskId): ?Timer
     {
         $row = Timer::query()

@@ -33,6 +33,11 @@ Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
         ->name('api.tasks.timers.index');
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('timers/stop', [TimerController::class, 'stopCurrent'])
+        ->name('api.timers.stop-current');
+});
+
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 

@@ -58,11 +58,17 @@ final class TimerController extends Controller
     {
         $this->authorize('stop', [Timer::class, $task]);
 
-        $timer = $this->service->stop($task, (string) $request->user()->id);
-
-        return response()->json(
-            TimerViewModel::fromModel($timer)->toArray()
+        $timer = $this->service->stop(
+            $task,
+            (string) $request->user()->id,
+            $request->header('Idempotency-Key')
         );
+
+        if ($timer === null) {
+            return response()->noContent();
+        }
+
+        return response()->json(TimerViewModel::fromModel($timer)->toArray());
     }
 
     public function active(Request $request)
@@ -72,5 +78,19 @@ final class TimerController extends Controller
         return response()->json([
             'activeTimer' => $timer ? TimerViewModel::fromModel($timer)->toArray() : null,
         ]);
+    }
+
+    public function stopCurrent(Request $request)
+    {
+        $timer = $this->service->stopCurrent(
+            (string) $request->user()->id,
+            $request->header('Idempotency-Key')
+        );
+
+        if ($timer === null) {
+            return response()->noContent();
+        }
+
+        return response()->json(TimerViewModel::fromModel($timer)->toArray());
     }
 }

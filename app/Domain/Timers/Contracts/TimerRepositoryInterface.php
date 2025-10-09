@@ -15,6 +15,10 @@ interface TimerRepositoryInterface
     /** @return Collection<int, Timer> */
     public function findRunningTimersForUser(string $userId, ?string $excludingTaskId = null): Collection;
 
+    public function findActiveTimerForUserLock(string $userId): ?Timer;
+
+    public function findTimerById(string $timerId): ?Timer;
+
     public function createRunning(string $taskId, int|string $userId): Timer;
 
     public function pauseActiveTimerForTask(string $taskId): ?Timer;
