@@ -17,6 +17,7 @@ Route::middleware(['auth:sanctum', 'throttle:20,1'])->prefix('projects')->group(
     Route::post('{project}/complete', [ProjectController::class, 'complete']);
     Route::delete('{project}', [ProjectController::class, 'destroy']);
     Route::get('/', [ProjectController::class, 'index']);
+    Route::get('{project}', [ProjectController::class, 'show']);
 });
 
 Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {

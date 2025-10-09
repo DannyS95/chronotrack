@@ -36,6 +36,7 @@ final class ProjectRepository implements ProjectRepositoryInterface
     {
         return Project::query()
             ->where('id', $projectId)
+            ->where('user_id', $userId)
             ->firstOrFail();
     }
 
