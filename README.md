@@ -6,24 +6,28 @@ ChronoTrack is a calm command center for your projects. Capture every idea, turn
 
 ## 🌟 What You Can Do Today
 
-- **Create projects that stay yours.** Everything is scoped to the signed-in user so personal and client work never mix.
-- **Plan tasks the way you work.** Add tasks, give them due dates and descriptions, and see their latest activity at a glance.
-- **Connect tasks to goals.** Goals keep projects pointed in the right direction, and progress snapshots show how close you are to done.
-- **Track time with intent.** Start and stop timers directly on tasks; ChronoTrack keeps the math straight and guards against stray overlaps.
-- **Review clean summaries.** Task and goal APIs return friendly payloads with elapsed time (both in seconds and humanised for dashboards).
+- **Sign in once, stay secure.** Self-serve register/login endpoints hand back Sanctum tokens, while `me` and `logout` keep the session tidy.
+- **Create projects that stay yours.** Ownership is enforced per user; projects can be completed or archived, and `GET /projects/{project}/summary` keeps the big picture close.
+- **Plan tasks the way you work.** Add, update, filter, and delete tasks with due dates and descriptions, always returning timer-aware snapshots.
+- **Connect tasks to goals.** Goals keep projects pointed in the right direction, and attaching/detaching active tasks keeps scope intentional.
+- **Track time with intent.** Start, pause, resume, or stop timers safely—ChronoTrack prevents overlapping sessions and honours idempotent stop requests.
+- **Review clean summaries.** Task, goal, and project summary payloads surface elapsed time in seconds and humanised strings for dashboards.
 
 ---
 
 ## 🔄 Everyday Flow
 
-1. **Create a project** – `POST /projects`
-2. **Add tasks** – `POST /projects/{project}/tasks`
-3. **Group tasks under goals** – `POST /projects/{project}/goals/{goal}/tasks/{task}` (attach) with only active tasks; remove when needed
-4. **Start working** – `POST /tasks/{task}/timers/start`
-5. **Pause or finish** – `POST /tasks/{task}/timers/pause` to pause, `POST /tasks/{task}/timers/stop` then patch the task status to `done`
-6. **Stay informed**
+1. **Authenticate** – `POST /register` (once) then `POST /login` for a Sanctum token; hit `GET /me` to confirm the session.
+2. **Create a project** – `POST /projects`
+3. **Add tasks** – `POST /projects/{project}/tasks`
+4. **Group tasks under goals** – `POST /projects/{project}/goals/{goal}/tasks/{task}` (attach) with only active tasks; remove when needed
+5. **Start working** – `POST /tasks/{task}/timers/start`
+6. **Pause or finish** – `POST /tasks/{task}/timers/pause` to pause, `POST /tasks/{task}/timers/stop` (or `POST /timers/stop` to stop whatever is running) then patch the task status to `done`
+7. **Stay informed**
    - Task details: `GET /projects/{project}/tasks/{task}`
    - Goal progress: `GET /projects/{project}/goals/{goal}/progress`
+   - Project summary: `GET /projects/{project}/summary`
+8. **Wrap up the project** – `POST /projects/{project}/complete` when everything is finished or `DELETE /projects/{project}` to archive it.
 
 Everything is authenticated with Laravel Sanctum, so the same token secures the entire loop.
 
@@ -36,7 +40,7 @@ Everything is authenticated with Laravel Sanctum, so the same token secures the 
 - **Tasks** always belong to a project and may optionally belong to a goal. A task can be attached or detached from a goal, but:
   - You can’t attach tasks to goals that are already complete.
   - Completed tasks can’t be attached to any goal—tasks must remain active to be linked.
-- **Timers** belong to tasks. A task can have many timers (historical sessions plus the current run), but the service stops any active timer before marking the task `done`.
+- **Timers** belong to tasks. A task can have many timers (historical sessions plus the current run), but the service stops any active timer before marking the task `done` and prevents a user from running overlapping sessions on the same project or goal.
 
 ### Completion Rules
 
@@ -45,6 +49,22 @@ Everything is authenticated with Laravel Sanctum, so the same token secures the 
 - Project status and progress metrics are recalculated after every task update, so projects immediately reflect the latest active/completed state of their goals and tasks.
 
 Put simply: **project → goals → tasks → timers** form a strict cascade. Completing work at the task level ripples up to goals and projects, while timers ensure time tracking stays accurate at the leaf node.
+
+---
+
+## ⏲ Timer Safeguards
+
+- **Single active session per user.** Starting a timer pauses any running timer on another project and blocks overlapping work on the same project or goal.
+- **Database-backed locking.** Repositories issue `FOR UPDATE` queries and unique partial indexes to guard against race conditions when timers start, pause, or stop.
+- **Idempotent stops.** `POST /tasks/{task}/timers/stop` and `POST /timers/stop` accept an `Idempotency-Key` header, caching the response so clients can safely retry without double-counting.
+
+---
+
+## 📊 Project Summary Endpoint
+
+- **All-in-one snapshot.** `GET /projects/{project}/summary` returns project metadata, task and goal breakdowns, running timer counts, and time totals (seconds + humanised strings).
+- **Timer-aware metrics.** Behind the scenes, `ProjectSummaryService` pulls `TaskSnapshot` and `GoalSnapshot` data so elapsed time reflects both active timers and stored historical totals.
+- **Dashboard ready.** The response is designed for drop-in widgets: running timers, percent complete, active since, and total tracked time arrive precomputed.
 
 ---
 
@@ -79,10 +99,11 @@ Common building blocks you will spot:
 
 | Area      | Highlights | Key Endpoints |
 |-----------|------------|---------------|
-| Projects  | Create and list projects scoped per user | `POST /projects`, `GET /projects` |
-| Tasks     | Create, list, view, update, delete; return timer-aware snapshots | `POST /projects/{project}/tasks`, `GET /projects/{project}/tasks`, `GET /projects/{project}/tasks/{task}`, `PATCH /projects/{project}/tasks/{task}`, `DELETE ...` |
-| Goals     | List, create, attach/detach active tasks, view progress | `GET /projects/{project}/goals`, `POST ...`, `POST /projects/{project}/goals/{goal}/tasks/{task}`, `GET .../progress` |
-| Timers    | Start/pause/stop per task, list user-active timers with project context | `POST /tasks/{task}/timers/start`, `POST /tasks/{task}/timers/pause`, `POST /tasks/{task}/timers/stop`, `GET /tasks/{task}/timers`, `GET /timers/active` |
+| Auth      | Self-serve register/login, fetch the current user, and revoke tokens | `POST /register`, `POST /login`, `GET /me`, `POST /logout` |
+| Projects  | Create, filter, show, summarise, complete, or archive projects scoped per user | `POST /projects`, `GET /projects`, `GET /projects/{project}`, `GET /projects/{project}/summary`, `POST /projects/{project}/complete`, `DELETE /projects/{project}` |
+| Tasks     | Create, list, view, update, delete; responses always include timer-aware snapshots | `POST /projects/{project}/tasks`, `GET /projects/{project}/tasks`, `GET /projects/{project}/tasks/{task}`, `PATCH /projects/{project}/tasks/{task}`, `DELETE /projects/{project}/tasks/{task}` |
+| Goals     | List, create, attach/detach active tasks, view progress, mark complete | `GET /projects/{project}/goals`, `POST /projects/{project}/goals`, `GET /projects/{project}/goals/{goal}`, `GET /projects/{project}/goals/{goal}/progress`, `POST /projects/{project}/goals/{goal}/tasks/{task}`, `DELETE /projects/{project}/goals/{goal}/tasks/{task}`, `POST /projects/{project}/goals/{goal}/complete` |
+| Timers    | Start/pause/stop per task, list timers, or stop whichever timer is running with idempotency support | `POST /tasks/{task}/timers/start`, `POST /tasks/{task}/timers/pause`, `POST /tasks/{task}/timers/stop`, `GET /tasks/{task}/timers`, `POST /timers/stop` |
 
 Under the hood, timers are recalculated safely thanks to shared helper utilities (`TimerDurations`) that aggregate historical durations plus live running time.
 

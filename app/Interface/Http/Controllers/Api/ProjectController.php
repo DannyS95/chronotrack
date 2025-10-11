@@ -13,6 +13,7 @@ use App\Application\Projects\Services\CompleteProjectService;
 use App\Application\Projects\Services\CreateProjectService;
 use App\Application\Projects\Services\ListProjectsService;
 use App\Application\Projects\Services\ShowProjectService;
+use App\Application\Projects\Services\ProjectSummaryService;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Interface\Http\Requests\Projects\ProjectFilterRequest;
 use App\Interface\Http\Requests\Projects\StoreProjectRequest;
@@ -106,5 +107,17 @@ class ProjectController extends Controller
             'message' => 'Project marked as complete.',
             'data' => $result,
         ]);
+    }
+
+    public function summary(Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        /** @var \Illuminate\Contracts\Auth\Guard $auth */
+        $auth = auth();
+
+        $summary = app(ProjectSummaryService::class)->handle($project->id, (string) $auth->id());
+
+        return response()->json($summary->toArray());
     }
 }

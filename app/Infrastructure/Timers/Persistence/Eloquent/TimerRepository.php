@@ -220,4 +220,19 @@ final class TimerRepository implements TimerRepositoryInterface
             ->orderByDesc('started_at')
             ->paginate(20);
     }
+
+    public function countActiveByProject(string $projectId, string $userId): int
+    {
+        return Timer::query()
+            ->whereNull('stopped_at')
+            ->where(function (Builder $query) use ($userId) {
+                $query->where('user_id', $userId)
+                    ->orWhere(function (Builder $nested) use ($userId) {
+                        $nested->whereNull('user_id')
+                            ->whereHas('task.project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
+                    });
+            })
+            ->whereHas('task', fn(Builder $taskQuery) => $taskQuery->where('project_id', $projectId))
+            ->count();
+    }
 }

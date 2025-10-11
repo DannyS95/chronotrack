@@ -36,4 +36,6 @@ interface TimerRepositoryInterface
     public function findActiveWithContext(string $userId): ?Timer;
 
     public function list(array $filters): LengthAwarePaginator;
+
+    public function countActiveByProject(string $projectId, string $userId): int;
 }
