@@ -3,11 +3,13 @@
 namespace App\Application\Timers\Services;
 
 use App\Domain\Common\Contracts\TransactionRunner;
+use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Timers\Exceptions\ActiveTimerExists;
 use App\Domain\Timers\Exceptions\NoActiveTimerOnTask;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +18,7 @@ final class TimerService
     public function __construct(
         private readonly TimerRepositoryInterface $timerRepository,
         private readonly TransactionRunner $tx,
+        private readonly TaskRepositoryInterface $taskRepository,
     ) {}
 
     private const IDEMPOTENCY_CACHE_PREFIX = 'timers:stop';
@@ -25,22 +28,28 @@ final class TimerService
     public function start(Task $task, int|string $userId): Timer
     {
         return $this->tx->run(function () use ($task, $userId) {
-            if ($task->status === 'done') {
+            $lockedTask = $this->taskRepository->lockOwnedForUpdate(
+                $task->id,
+                (string) $task->project_id,
+                (string) $userId
+            );
+
+            if ($lockedTask->status === 'done') {
                 throw ValidationException::withMessages([
                     'task_id' => ['Cannot start a timer on a completed task.'],
                 ]);
             }
 
-            $activeForTask = $this->timerRepository->findActiveForTaskLock($task->id);
+            $activeForTask = $this->timerRepository->findActiveForTaskLock($lockedTask->id);
             if ($activeForTask) {
                 if ($activeForTask->paused_at !== null) {
                     return $this->timerRepository->resumeTimer($activeForTask);
                 }
 
-                return $activeForTask;
+                throw new ActiveTimerExists((string) $activeForTask->id, 'task');
             }
 
-            $runningTimers = $this->timerRepository->findRunningTimersForUser($userId, $task->id);
+            $runningTimers = $this->timerRepository->findRunningTimersForUser($userId, $lockedTask->id);
 
             foreach ($runningTimers as $runningTimer) {
                 $otherTask = optional($runningTimer->task);
@@ -48,10 +57,10 @@ final class TimerService
                 $otherGoalId = $otherTask?->goal_id;
 
                 $sameProject = $otherProjectId !== null
-                    && (string) $otherProjectId === (string) $task->project_id;
+                    && (string) $otherProjectId === (string) $lockedTask->project_id;
 
                 if ($sameProject) {
-                    $scope = ($task->goal_id !== null && $task->goal_id === $otherGoalId)
+                    $scope = ($lockedTask->goal_id !== null && $lockedTask->goal_id === $otherGoalId)
                         ? 'goal'
                         : 'project';
 
@@ -61,7 +70,24 @@ final class TimerService
                 $this->timerRepository->pauseActiveTimerForTask($runningTimer->task_id);
             }
 
-            return $this->timerRepository->createRunning($task->id, $userId);
+            try {
+                return $this->timerRepository->createRunning($lockedTask->id, $userId);
+            } catch (QueryException $exception) {
+                if ($this->isActiveTimerConstraintViolation($exception)) {
+                    $conflict = $this->timerRepository->findActiveTimerForUserLock((string) $userId);
+
+                    if ($conflict) {
+                        throw new ActiveTimerExists(
+                            (string) $conflict->id,
+                            $this->resolveConflictScope($lockedTask, $conflict)
+                        );
+                    }
+
+                    throw new ActiveTimerExists('unknown');
+                }
+
+                throw $exception;
+            }
         });
     }
 
@@ -165,5 +191,37 @@ final class TimerService
         $scope = $taskId ? 'task:'.$taskId : 'current';
 
         return sprintf('%s:%s:%s', self::IDEMPOTENCY_CACHE_PREFIX, $userId, $scope.'::'.$idempotencyKey);
+    }
+
+    private function isActiveTimerConstraintViolation(QueryException $exception): bool
+    {
+        $message = $exception->getMessage();
+
+        if (str_contains($message, 'timers_user_active_unique') || str_contains($message, 'timers_task_active_unique')) {
+            return true;
+        }
+
+        $previous = $exception->getPrevious();
+
+        return $previous !== null && str_contains($previous->getMessage(), 'timers_user_active_unique');
+    }
+
+    private function resolveConflictScope(Task $lockedTask, Timer $conflictingTimer): string
+    {
+        if ($conflictingTimer->task_id === $lockedTask->id) {
+            return 'task';
+        }
+
+        $conflictingTask = optional($conflictingTimer->task);
+
+        if ($conflictingTask && (string) $conflictingTask->project_id === (string) $lockedTask->project_id) {
+            if ($lockedTask->goal_id !== null && $lockedTask->goal_id === $conflictingTask->goal_id) {
+                return 'goal';
+            }
+
+            return 'project';
+        }
+
+        return 'timer';
     }
 }

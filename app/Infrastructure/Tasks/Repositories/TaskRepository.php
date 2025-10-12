@@ -139,4 +139,13 @@ final class TaskRepository implements TaskRepositoryInterface
             ->where('status', '!=', 'done')
             ->count();
     }
+
+    public function lockOwnedForUpdate(string $taskId, string $projectId, string $userId): Task
+    {
+        return Task::query()
+            ->ownedBy($projectId, $userId)
+            ->whereKey($taskId)
+            ->lockForUpdate()
+            ->firstOrFail();
+    }
 }

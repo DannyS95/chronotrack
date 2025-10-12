@@ -41,4 +41,6 @@ interface TaskRepositoryInterface
     public function countByProject(string $projectId, string $userId): int;
 
     public function countIncompleteByProject(string $projectId, string $userId): int;
+
+    public function lockOwnedForUpdate(string $taskId, string $projectId, string $userId): Task;
 }

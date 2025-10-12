@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::getConnection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('timers', function (Blueprint $table) {
             $table->dropUnique('timers_user_active_unique');
             $table->dropUnique('timers_task_active_unique');
@@ -26,6 +30,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::getConnection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('timers', function (Blueprint $table) {
             $table->dropUnique('timers_user_active_unique');
             $table->dropColumn('user_active_key');

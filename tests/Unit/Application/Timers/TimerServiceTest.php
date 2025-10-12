@@ -4,15 +4,18 @@ namespace Tests\Unit\Application\Timers;
 
 use App\Application\Timers\Services\TimerService;
 use App\Domain\Common\Contracts\TransactionRunner;
+use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Timers\Exceptions\ActiveTimerExists;
 use App\Domain\Timers\Exceptions\NoActiveTimerOnTask;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Mockery;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 
 final class TimerServiceTest extends TestCase
@@ -22,7 +25,7 @@ final class TimerServiceTest extends TestCase
         Mockery::close();
     }
 
-    public function test_start_returns_existing_timer_when_same_task_running(): void
+    public function test_start_throws_conflict_when_same_task_running(): void
     {
         $task = $this->makeTask('task-1', 'project-1', 'goal-1');
         $existingTimer = new Timer();
@@ -35,11 +38,18 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
 
-        $result = $service->start($task, '1');
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
-        $this->assertSame($existingTimer, $result);
+        $this->expectException(ActiveTimerExists::class);
+        $this->expectExceptionMessage('A timer is already running on this task.');
+
+        $service->start($task, '1');
     }
 
     public function test_start_resumes_paused_timer_on_same_task(): void
@@ -59,7 +69,13 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $result = $service->start($task, '1');
 
@@ -82,7 +98,13 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('createRunning')
             ->once()->with('task-1', '1')->andReturn($created);
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $result = $service->start($task, '1');
 
@@ -101,7 +123,13 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(ActiveTimerExists::class);
         $this->expectExceptionMessage('A timer is already running for this goal.');
@@ -121,7 +149,13 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(ActiveTimerExists::class);
         $this->expectExceptionMessage('A timer is already running for this project.');
@@ -141,7 +175,13 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(ActiveTimerExists::class);
         $this->expectExceptionMessage('A timer is already running for this project.');
@@ -155,10 +195,59 @@ final class TimerServiceTest extends TestCase
         $task->status = 'done';
 
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
+        $timerRepository->shouldNotReceive('findActiveForTaskLock');
+        $timerRepository->shouldNotReceive('findRunningTimersForUser');
+        $timerRepository->shouldNotReceive('pauseActiveTimerForTask');
+        $timerRepository->shouldNotReceive('createRunning');
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-closed', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(ValidationException::class);
+
+        $service->start($task, '1');
+    }
+
+    public function test_start_translates_unique_constraint_violation_to_conflict(): void
+    {
+        $task = $this->makeTask('task-1', 'project-1', 'goal-1');
+
+        $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
+        $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
+        $timerRepository->shouldReceive('findRunningTimersForUser')
+            ->once()->with('1', 'task-1')->andReturn(new Collection());
+
+        $pdoException = new PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'user\' for key \'timers_user_active_unique\'');
+        $queryException = new QueryException('insert into timers ...', [], $pdoException);
+
+        $timerRepository->shouldReceive('createRunning')
+            ->once()->with('task-1', '1')->andThrow($queryException);
+
+        $conflictingTimer = new Timer();
+        $conflictingTimer->id = 'timer-99';
+        $conflictingTimer->task_id = 'task-2';
+
+        $conflictingTask = $this->makeTask('task-2', 'project-1', 'goal-1');
+        $conflictingTimer->setRelation('task', $conflictingTask);
+
+        $timerRepository->shouldReceive('findActiveTimerForUserLock')
+            ->once()->with('1')->andReturn($conflictingTimer);
+
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+        $taskRepository->shouldReceive('lockOwnedForUpdate')
+            ->once()
+            ->with('task-1', 'project-1', '1')
+            ->andReturn($task);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
+
+        $this->expectException(ActiveTimerExists::class);
+        $this->expectExceptionMessage('A timer is already running for this goal.');
 
         $service->start($task, '1');
     }
@@ -175,7 +264,9 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')
             ->once()->with('task-1')->andReturn($pausedTimer);
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $result = $service->pause($task, '1');
 
@@ -191,7 +282,9 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('pauseActiveTimerForTask')
             ->once()->with('task-1')->andReturnNull();
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(NoActiveTimerOnTask::class);
 
@@ -206,7 +299,9 @@ final class TimerServiceTest extends TestCase
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $timerRepository->shouldNotReceive('pauseActiveTimerForTask');
 
-        $service = new TimerService($timerRepository, $this->transactionRunner());
+        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
+
+        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(ValidationException::class);
 
