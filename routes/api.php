@@ -1,27 +1,57 @@
 <?php
 
 use App\Interface\Http\Controllers\Api\AuthController;
+use App\Interface\Http\Controllers\Api\GoalController;
 use App\Interface\Http\Controllers\Api\ProjectController;
-use Illuminate\Support\Facades\Route;
 use App\Interface\Http\Controllers\Api\TaskController;
 use App\Interface\Http\Controllers\Api\TimerController;
-use App\Interface\Http\Controllers\Api\GoalController;
+use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'throttle:20,1'])->prefix('projects')->group(function () {
-    Route::post('/', [ProjectController::class, 'store']);
-    Route::post('{project}/tasks', [TaskController::class, 'store']);
-    Route::get('{project}/tasks', [TaskController::class, 'index']);
-    Route::get('{project}/tasks/{task}', [TaskController::class, 'show']);
-    Route::patch('{project}/tasks/{task}', [TaskController::class, 'update']);
-    Route::delete('{project}/tasks/{task}', [TaskController::class, 'destroy']);
-    Route::post('{project}/complete', [ProjectController::class, 'complete']);
-    Route::delete('{project}', [ProjectController::class, 'destroy']);
-    Route::get('/', [ProjectController::class, 'index']);
-    Route::get('{project}/summary', [ProjectController::class, 'summary']);
-    Route::get('{project}', [ProjectController::class, 'show']);
+Route::middleware('throttle:auth-login')->post('/login', [AuthController::class, 'login']);
+Route::middleware('throttle:auth-register')->post('/register', [AuthController::class, 'register']);
+
+Route::middleware(['auth:sanctum', 'throttle:auth-session'])->group(function () {
+    Route::get('/me', [AuthController::class, 'me'])->name('api.auth.me');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
 });
 
-Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('projects')->name('projects.')->group(function () {
+    Route::middleware('throttle:projects')->group(function () {
+        Route::get('/', [ProjectController::class, 'index'])->name('index');
+        Route::post('/', [ProjectController::class, 'store'])->name('store');
+        Route::get('{project}', [ProjectController::class, 'show'])->name('show');
+        Route::get('{project}/summary', [ProjectController::class, 'summary'])->name('summary');
+        Route::post('{project}/complete', [ProjectController::class, 'complete'])->name('complete');
+        Route::delete('{project}', [ProjectController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::middleware('throttle:tasks')
+        ->prefix('{project}/tasks')
+        ->name('tasks.')
+        ->group(function () {
+            Route::post('/', [TaskController::class, 'store'])->name('store');
+            Route::get('/', [TaskController::class, 'index'])->name('index');
+            Route::get('{task}', [TaskController::class, 'show'])->name('show');
+            Route::patch('{task}', [TaskController::class, 'update'])->name('update');
+            Route::delete('{task}', [TaskController::class, 'destroy'])->name('destroy');
+        });
+
+    Route::scopeBindings()
+        ->middleware('throttle:goals')
+        ->group(function () {
+            Route::prefix('{project}/goals')->name('goals.')->group(function () {
+                Route::get('/', [GoalController::class, 'index'])->name('index');
+                Route::post('/', [GoalController::class, 'store'])->name('store');
+                Route::get('{goal}', [GoalController::class, 'show'])->name('show');
+                Route::get('{goal}/progress', [GoalController::class, 'progress'])->name('progress');
+                Route::post('{goal}/complete', [GoalController::class, 'complete'])->name('complete');
+                Route::post('{goal}/tasks/{task}', [GoalController::class, 'attach'])->name('tasks.attach');
+                Route::delete('{goal}/tasks/{task}', [GoalController::class, 'detach'])->name('tasks.detach');
+            });
+        });
+});
+
+Route::middleware(['auth:sanctum', 'throttle:timer-actions'])->prefix('tasks')->group(function () {
     Route::post('{task}/timers/start', [TimerController::class, 'start'])
         ->name('api.tasks.timers.start');
 
@@ -35,27 +65,9 @@ Route::middleware('auth:sanctum')->prefix('tasks')->group(function () {
         ->name('api.tasks.timers.index');
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('timers/stop', [TimerController::class, 'stopCurrent'])
+Route::middleware(['auth:sanctum', 'throttle:timers'])->prefix('timers')->group(function () {
+    Route::post('stop', [TimerController::class, 'stopCurrent'])
         ->name('api.timers.stop-current');
-});
-
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-});
-
-Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
-    Route::scopeBindings()->group(function () {
-        Route::get('{project}/goals', [GoalController::class, 'index'])->name('api.projects.goals.index');
-        Route::post('{project}/goals', [GoalController::class, 'store'])->name('api.projects.goals.store');
-        Route::get('{project}/goals/{goal}', [GoalController::class, 'show'])->name('api.projects.goals.show');
-        Route::get('{project}/goals/{goal}/progress', [GoalController::class, 'progress'])->name('api.projects.goals.progress');
-        Route::post('{project}/goals/{goal}/complete', [GoalController::class, 'complete'])->name('api.projects.goals.complete');
-        Route::post('{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'attach'])->name('api.projects.goals.tasks.attach');
-        Route::delete('{project}/goals/{goal}/tasks/{task}', [GoalController::class, 'detach'])->name('api.projects.goals.tasks.detach');
-    });
+    Route::get('active', [TimerController::class, 'active'])
+        ->name('api.timers.active');
 });
