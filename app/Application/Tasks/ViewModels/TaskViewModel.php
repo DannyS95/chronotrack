@@ -29,8 +29,8 @@ final class TaskViewModel
             'created_at'       => $this->snapshot->createdAt,
             'updated_at'       => $this->snapshot->updatedAt,
             'active_since'     => $this->snapshot->activeSince,
-            'time_spent_seconds' => $this->snapshot->timeSpentSeconds,
-            'time_spent_human'   => $this->snapshot->timeSpentHuman,
+            'accumulated_seconds' => $this->snapshot->accumulatedSeconds,
+            'accumulated_human'   => $this->snapshot->accumulatedHuman,
             'has_active_timers'  => $this->snapshot->hasActiveTimers(),
         ];
     }

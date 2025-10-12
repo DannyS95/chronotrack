@@ -236,11 +236,9 @@ final class UpdateTaskServiceTest extends TestCase
             createdAt: null,
             updatedAt: null,
             activeSince: null,
-            activeDurationSeconds: 0,
-            activeDurationHuman: null,
+            accumulatedSeconds: 0,
+            accumulatedHuman: null,
             hasActiveTimers: false,
-            timeSpentSeconds: 0,
-            timeSpentHuman: null,
         );
     }
 

@@ -4,14 +4,13 @@ namespace App\Application\Projects\Services;
 
 use App\Application\Projects\DTO\CompleteProjectDTO;
 use App\Domain\Projects\Contracts\ProjectRepositoryInterface;
-use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
+use App\Domain\Timers\Exceptions\ActiveTimerOperationBlocked;
 
 final class CompleteProjectService
 {
     public function __construct(
         private readonly ProjectRepositoryInterface $projectRepository,
-        private readonly TaskRepositoryInterface $taskRepository,
         private readonly TimerRepositoryInterface $timerRepository,
         private readonly ProjectLifecycleService $projectLifecycleService,
     ) {}
@@ -23,19 +22,18 @@ final class CompleteProjectService
     {
         $project = $this->projectRepository->findOwned($dto->projectId, $dto->userId);
 
-        $tasks = $this->taskRepository->getTasksByProject($project->id, $dto->userId);
-        $taskIds = $tasks->pluck('id')->values()->all();
+        $runningTimers = $this->timerRepository->countActiveByProject($project->id, $dto->userId);
 
-        $timersStopped = $taskIds === []
-            ? 0
-            : $this->timerRepository->stopActiveTimersForTasks($taskIds);
+        if ($runningTimers > 0) {
+            throw new ActiveTimerOperationBlocked('project', $runningTimers);
+        }
 
         $updatedProject = $this->projectLifecycleService->completeManually($project->id, $dto->userId);
 
         return [
             'project_id' => $updatedProject->id,
             'status' => $updatedProject->status,
-            'timers_stopped' => $timersStopped,
+            'timers_stopped' => 0,
         ];
     }
 }

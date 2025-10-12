@@ -22,11 +22,9 @@ final class TaskSnapshot
         public readonly ?string $createdAt,
         public readonly ?string $updatedAt,
         public readonly ?string $activeSince,
-        public readonly int $activeDurationSeconds,
-        public readonly ?string $activeDurationHuman,
+        public readonly int $accumulatedSeconds,
+        public readonly ?string $accumulatedHuman,
         public readonly bool $hasActiveTimers,
-        public readonly int $timeSpentSeconds,
-        public readonly ?string $timeSpentHuman,
     ) {}
 
     public static function fromModel(TaskModel $task): self
@@ -41,18 +39,17 @@ final class TaskSnapshot
             ? $task->timers
             : $task->timers()->get();
 
-        $totalSeconds = max(0, self::calculateTimerSeconds($timers));
+        $trackedSeconds = max(0, self::calculateTimerSeconds($timers));
         $activeSinceDate = TimerDurations::determineActiveSinceFromCollection($timers);
         $activeSince = $activeSinceDate ? $formatDate($activeSinceDate) : null;
-        $activeDurationHuman = TimerDurations::humanizeSeconds($totalSeconds);
         $hasActiveTimers = $timers->contains(fn(Timer $timer) => $timer->stopped_at === null);
 
         $storedSeconds = (int) ($task->time_spent_seconds ?? 0);
         $fallbackSeconds = self::calculateFallbackSeconds($task);
-        $timeSpentSeconds = $totalSeconds > 0
-            ? $totalSeconds
+        $accumulatedSeconds = $trackedSeconds > 0
+            ? $trackedSeconds
             : ($storedSeconds > 0 ? $storedSeconds : $fallbackSeconds);
-        $timeSpentHuman = $timeSpentSeconds > 0 ? TimerDurations::humanizeSeconds($timeSpentSeconds) : null;
+        $accumulatedHuman = $accumulatedSeconds > 0 ? TimerDurations::humanizeSeconds($accumulatedSeconds) : null;
 
         return new self(
             id: $task->id,
@@ -66,11 +63,9 @@ final class TaskSnapshot
             createdAt: $formatDate($task->created_at),
             updatedAt: $formatDate($task->updated_at),
             activeSince: $activeSince,
-            activeDurationSeconds: $totalSeconds,
-            activeDurationHuman: $activeDurationHuman,
+            accumulatedSeconds: $accumulatedSeconds,
+            accumulatedHuman: $accumulatedHuman,
             hasActiveTimers: $hasActiveTimers,
-            timeSpentSeconds: $timeSpentSeconds,
-            timeSpentHuman: $timeSpentHuman,
         );
     }
 

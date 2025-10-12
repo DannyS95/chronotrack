@@ -106,15 +106,9 @@ final class ProjectSummaryViewModel
             ->filter(fn(TaskSnapshot $task) => $task->hasActiveTimers())
             ->count();
 
-        $elapsedSeconds = TimerDurations::sumDurationsFromSnapshots($taskSnapshots);
-        $elapsedHuman = TimerDurations::humanizeSeconds($elapsedSeconds);
+        $accumulatedSeconds = TimerDurations::sumDurationsFromSnapshots($taskSnapshots);
+        $accumulatedHuman = TimerDurations::humanizeSeconds($accumulatedSeconds);
         $activeSince = TimerDurations::determineActiveSinceFromSnapshots($taskSnapshots);
-
-        $timeSpentSeconds = $taskSnapshots->reduce(
-            fn(int $carry, TaskSnapshot $task) => $carry + max(0, $task->timeSpentSeconds),
-            0
-        );
-        $timeSpentHuman = TimerDurations::humanizeSeconds($timeSpentSeconds);
 
         $percentComplete = $total > 0
             ? (int) round(($completed / $total) * 100)
@@ -128,10 +122,8 @@ final class ProjectSummaryViewModel
             'active_timers' => $runningCount,
             'has_running_timers' => $runningCount > 0,
             'active_since' => $activeSince,
-            'elapsed_seconds' => $elapsedSeconds,
-            'elapsed_human' => $elapsedHuman,
-            'time_spent_seconds' => $timeSpentSeconds,
-            'time_spent_human' => $timeSpentHuman,
+            'accumulated_seconds' => $accumulatedSeconds,
+            'accumulated_human' => $accumulatedHuman,
         ];
     }
 
@@ -156,15 +148,9 @@ final class ProjectSummaryViewModel
             ->filter(fn(TaskSnapshot $task) => $task->hasActiveTimers())
             ->count();
 
-        $elapsedSeconds = TimerDurations::sumDurationsFromSnapshots($goalTaskSnapshots);
-        $elapsedHuman = TimerDurations::humanizeSeconds($elapsedSeconds);
+        $accumulatedSeconds = TimerDurations::sumDurationsFromSnapshots($goalTaskSnapshots);
+        $accumulatedHuman = TimerDurations::humanizeSeconds($accumulatedSeconds);
         $activeSince = TimerDurations::determineActiveSinceFromSnapshots($goalTaskSnapshots);
-
-        $timeSpentSeconds = $goalTaskSnapshots->reduce(
-            fn(int $carry, TaskSnapshot $task) => $carry + max(0, $task->timeSpentSeconds),
-            0
-        );
-        $timeSpentHuman = TimerDurations::humanizeSeconds($timeSpentSeconds);
 
         $percentComplete = $total > 0
             ? (int) round(($completed / $total) * 100)
@@ -178,10 +164,8 @@ final class ProjectSummaryViewModel
             'active_timers' => $runningCount,
             'has_running_timers' => $runningCount > 0,
             'active_since' => $activeSince,
-            'elapsed_seconds' => $elapsedSeconds,
-            'elapsed_human' => $elapsedHuman,
-            'time_spent_seconds' => $timeSpentSeconds,
-            'time_spent_human' => $timeSpentHuman,
+            'accumulated_seconds' => $accumulatedSeconds,
+            'accumulated_human' => $accumulatedHuman,
         ];
     }
 
@@ -191,24 +175,16 @@ final class ProjectSummaryViewModel
      */
     private static function buildTimerStats(Collection $taskSnapshots, int $runningTimers): array
     {
-        $elapsedSeconds = TimerDurations::sumDurationsFromSnapshots($taskSnapshots);
-        $elapsedHuman = TimerDurations::humanizeSeconds($elapsedSeconds);
+        $accumulatedSeconds = TimerDurations::sumDurationsFromSnapshots($taskSnapshots);
+        $accumulatedHuman = TimerDurations::humanizeSeconds($accumulatedSeconds);
         $activeSince = TimerDurations::determineActiveSinceFromSnapshots($taskSnapshots);
-
-        $timeSpentSeconds = $taskSnapshots->reduce(
-            fn(int $carry, TaskSnapshot $task) => $carry + max(0, $task->timeSpentSeconds),
-            0
-        );
-        $timeSpentHuman = TimerDurations::humanizeSeconds($timeSpentSeconds);
 
         return [
             'running' => $runningTimers,
             'has_running' => $runningTimers > 0,
             'active_since' => $activeSince,
-            'tracked_seconds' => $elapsedSeconds,
-            'tracked_human' => $elapsedHuman,
-            'time_spent_seconds' => $timeSpentSeconds,
-            'time_spent_human' => $timeSpentHuman,
+            'accumulated_seconds' => $accumulatedSeconds,
+            'accumulated_human' => $accumulatedHuman,
         ];
     }
 }

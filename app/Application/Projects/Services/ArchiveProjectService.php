@@ -8,6 +8,7 @@ use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Projects\Contracts\ProjectRepositoryInterface;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
+use App\Domain\Timers\Exceptions\ActiveTimerOperationBlocked;
 use Illuminate\Support\Collection;
 
 final class ArchiveProjectService
@@ -28,12 +29,14 @@ final class ArchiveProjectService
         return $this->tx->run(function () use ($dto) {
             $project = $this->projectRepository->findOwned($dto->projectId, $dto->userId);
 
+            $runningTimers = $this->timerRepository->countActiveByProject($project->id, $dto->userId);
+
+            if ($runningTimers > 0) {
+                throw new ActiveTimerOperationBlocked('project', $runningTimers);
+            }
+
             $tasks = $this->taskRepository->getTasksByProject($project->id, $dto->userId);
             $taskIds = $tasks->pluck('id')->values()->all();
-
-            $timersStopped = $taskIds === []
-                ? 0
-                : $this->timerRepository->stopActiveTimersForTasks($taskIds);
 
             if ($taskIds !== []) {
                 $this->taskRepository->markTasksAsComplete($taskIds);
@@ -54,7 +57,7 @@ final class ArchiveProjectService
                 'project_id' => $project->id,
                 'tasks_archived' => $tasks->count(),
                 'goals_archived' => $goalsArchived,
-                'timers_stopped' => $timersStopped,
+                'timers_stopped' => 0,
             ];
         });
     }

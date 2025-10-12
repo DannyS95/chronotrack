@@ -19,8 +19,8 @@ final class GoalProgressViewModel
         private readonly int $totalTasks,
         private readonly int $completedTasks,
         private readonly int $percentComplete,
-        private readonly int $elapsedSeconds,
-        private readonly ?string $elapsedHuman,
+        private readonly int $accumulatedSeconds,
+        private readonly ?string $accumulatedHuman,
         private readonly ?string $activeSince,
         array $tasks,
     ) {
@@ -54,8 +54,8 @@ final class GoalProgressViewModel
             totalTasks: $totalTasks,
             completedTasks: $completedTasks,
             percentComplete: $percent,
-            elapsedSeconds: $elapsedSeconds,
-            elapsedHuman: $elapsedHuman,
+            accumulatedSeconds: $elapsedSeconds,
+            accumulatedHuman: $elapsedHuman,
             activeSince: $activeSince,
             tasks: $tasks,
         );
@@ -70,8 +70,8 @@ final class GoalProgressViewModel
             totalTasks: $this->totalTasks,
             completedTasks: $this->completedTasks,
             percentComplete: $this->percentComplete,
-            elapsedSeconds: $this->elapsedSeconds,
-            elapsedHuman: $this->elapsedHuman,
+            accumulatedSeconds: $this->accumulatedSeconds,
+            accumulatedHuman: $this->accumulatedHuman,
             activeSince: $this->activeSince,
             tasks: $this->tasks,
         );
@@ -86,8 +86,8 @@ final class GoalProgressViewModel
             totalTasks: $this->totalTasks,
             completedTasks: $this->completedTasks,
             percentComplete: $this->totalTasks > 0 ? 100 : $this->percentComplete,
-            elapsedSeconds: $this->elapsedSeconds,
-            elapsedHuman: $this->elapsedHuman,
+            accumulatedSeconds: $this->accumulatedSeconds,
+            accumulatedHuman: $this->accumulatedHuman,
             activeSince: $this->activeSince,
             tasks: $this->tasks,
         );
@@ -118,14 +118,14 @@ final class GoalProgressViewModel
         return $this->percentComplete;
     }
 
-    public function elapsedSeconds(): int
+    public function accumulatedSeconds(): int
     {
-        return $this->elapsedSeconds;
+        return $this->accumulatedSeconds;
     }
 
-    public function elapsedHuman(): ?string
+    public function accumulatedHuman(): ?string
     {
-        return $this->elapsedHuman;
+        return $this->accumulatedHuman;
     }
 
     public function activeSince(): ?string
@@ -134,7 +134,7 @@ final class GoalProgressViewModel
     }
 
     /**
-     * @return array<int, array{id:string,title:string,status:?string,active_since:?string,active_duration_seconds:int,active_duration_human:?string}>
+     * @return array<int, array{id:string,title:string,status:?string,active_since:?string,accumulated_seconds:int,accumulated_human:?string}>
      */
     public function tasks(): array
     {
@@ -151,8 +151,8 @@ final class GoalProgressViewModel
             'completed_tasks'  => $this->completedTasks(),
             'percent_complete' => $this->percentComplete(),
             'active_since'     => $this->activeSince(),
-            'elapsed_seconds'  => $this->elapsedSeconds(),
-            'elapsed_human'    => $this->elapsedHuman(),
+            'accumulated_seconds'  => $this->accumulatedSeconds(),
+            'accumulated_human'    => $this->accumulatedHuman(),
             'tasks'            => $this->tasks(),
         ];
     }

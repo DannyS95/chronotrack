@@ -20,7 +20,7 @@ final class TimerViewModel
      */
     public function toArray(): array
     {
-        $elapsedSeconds = $this->elapsedSeconds();
+        $accumulatedSeconds = $this->accumulatedSeconds();
 
         return [
             'id' => $this->timer->id,
@@ -29,9 +29,9 @@ final class TimerViewModel
             'started_at' => $this->timer->started_at?->toISOString(),
             'stopped_at' => $this->timer->stopped_at?->toISOString(),
             'paused_at' => $this->timer->paused_at?->toISOString(),
-            'duration' => $this->timer->duration ?? $elapsedSeconds,
-            'elapsed_seconds' => $elapsedSeconds,
-            'elapsed_human' => $this->humanizeSeconds($elapsedSeconds),
+            'active_since' => $this->activeSince(),
+            'accumulated_seconds' => $accumulatedSeconds,
+            'accumulated_human' => $this->humanizeSeconds($accumulatedSeconds),
             'is_active' => $this->timer->stopped_at === null,
             'is_paused' => $this->timer->paused_at !== null && $this->timer->stopped_at === null,
             'paused_total_seconds' => $this->timer->paused_total,
@@ -40,10 +40,10 @@ final class TimerViewModel
         ];
     }
 
-    private function elapsedSeconds(): int
+    private function accumulatedSeconds(): int
     {
-        if ($this->timer->duration !== null && $this->timer->duration > 0) {
-            return (int) $this->timer->duration;
+        if ($this->timer->duration !== null) {
+            return max(0, (int) $this->timer->duration);
         }
 
         $startedAt = $this->timer->started_at
@@ -54,13 +54,28 @@ final class TimerViewModel
             return 0;
         }
 
-        $endTimestamp = match (true) {
-            $this->timer->stopped_at !== null => Carbon::parse($this->timer->stopped_at)->getTimestamp(),
-            $this->timer->paused_at !== null => Carbon::parse($this->timer->paused_at)->getTimestamp(),
-            default => Carbon::now()->getTimestamp(),
+        $effectiveStop = match (true) {
+            $this->timer->stopped_at !== null => Carbon::parse($this->timer->stopped_at),
+            $this->timer->paused_at !== null => Carbon::parse($this->timer->paused_at),
+            default => Carbon::now(),
         };
 
-        return max(0, $endTimestamp - $startedAt->getTimestamp());
+        $diff = $effectiveStop->greaterThan($startedAt)
+            ? $effectiveStop->diffInSeconds($startedAt)
+            : 0;
+
+        $diff -= (int) $this->timer->paused_total;
+
+        return max(0, $diff);
+    }
+
+    private function activeSince(): ?string
+    {
+        if ($this->timer->stopped_at !== null || $this->timer->paused_at !== null) {
+            return null;
+        }
+
+        return $this->timer->started_at?->toISOString();
     }
 
     private function humanizeSeconds(int $seconds): ?string

@@ -73,7 +73,7 @@ final class TimerDurations
         }
 
         return (int) $snapshots->reduce(
-            fn(int $carry, TaskSnapshot $task) => $carry + max(0, $task->activeDurationSeconds),
+            fn(int $carry, TaskSnapshot $task) => $carry + max(0, $task->accumulatedSeconds),
             0
         );
     }

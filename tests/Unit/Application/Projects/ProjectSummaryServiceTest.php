@@ -118,19 +118,16 @@ final class ProjectSummaryServiceTest extends TestCase
         $this->assertSame(1, $payload['tasks']['completed']);
         $this->assertSame(1, $payload['tasks']['active']);
         $this->assertSame(1, $payload['tasks']['active_timers']);
-        $this->assertSame(5400, $payload['tasks']['elapsed_seconds']);
-        $this->assertSame(5400, $payload['tasks']['time_spent_seconds']);
+        $this->assertSame(5400, $payload['tasks']['accumulated_seconds']);
 
         $this->assertSame(2, $payload['goals']['total']);
         $this->assertSame(1, $payload['goals']['completed']);
         $this->assertSame(1, $payload['goals']['active']);
         $this->assertSame(0, $payload['goals']['active_timers']);
-        $this->assertSame(3600, $payload['goals']['elapsed_seconds']);
-        $this->assertSame(3600, $payload['goals']['time_spent_seconds']);
+        $this->assertSame(3600, $payload['goals']['accumulated_seconds']);
 
         $this->assertSame(1, $payload['timers']['running']);
         $this->assertTrue($payload['timers']['has_running']);
-        $this->assertSame(5400, $payload['timers']['tracked_seconds']);
-        $this->assertSame(5400, $payload['timers']['time_spent_seconds']);
+        $this->assertSame(5400, $payload['timers']['accumulated_seconds']);
     }
 }
