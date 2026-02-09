@@ -19,10 +19,7 @@ final class TaskTimerProfile
         $type = strtolower(trim($timerType));
 
         return match ($type) {
-            'pomodoro' => [
-                'timer_type' => 'pomodoro',
-                'target_duration_seconds' => self::POMODORO_MINUTES * 60,
-            ],
+            'pomodoro' => self::normalizePomodoro($targetMinutes),
             'custom' => [
                 'timer_type' => 'custom',
                 'target_duration_seconds' => self::requireMinutes($targetMinutes, 'custom') * 60,
@@ -43,6 +40,25 @@ final class TaskTimerProfile
     public static function pomodoroMinutes(): int
     {
         return self::POMODORO_MINUTES;
+    }
+
+    /**
+     * @return array{timer_type:string,target_duration_seconds:int}
+     */
+    private static function normalizePomodoro(mixed $targetMinutes): array
+    {
+        if ($targetMinutes !== null && $targetMinutes !== '' && ! is_numeric($targetMinutes)) {
+            throw new InvalidArgumentException('target_minutes must be numeric.');
+        }
+
+        if ($targetMinutes !== null && $targetMinutes !== '' && (int) $targetMinutes !== self::POMODORO_MINUTES) {
+            throw new InvalidArgumentException('Pomodoro uses a fixed 25-minute timer.');
+        }
+
+        return [
+            'timer_type' => 'pomodoro',
+            'target_duration_seconds' => self::POMODORO_MINUTES * 60,
+        ];
     }
 
     private static function requireMinutes(mixed $targetMinutes, string $timerType): int

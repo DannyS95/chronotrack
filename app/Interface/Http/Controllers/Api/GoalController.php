@@ -9,11 +9,12 @@ use App\Application\Goals\Services\CompleteGoalService;
 use App\Application\Goals\Services\CreateGoalService;
 use App\Application\Goals\Services\GoalProgressService;
 use App\Application\Goals\Services\ListGoalsService;
-use App\Application\Projects\Services\WorkspaceProjectResolver;
+use App\Application\Workspaces\Services\WorkspaceResolver;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Interface\Http\Controllers\Controller;
 use App\Interface\Http\Requests\Goals\GoalFilterRequest;
 use App\Interface\Http\Requests\Goals\StoreGoalRequest;
+use App\Interface\Http\Support\GoalResponseMapper;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 
@@ -24,19 +25,20 @@ final class GoalController extends Controller
         private readonly CreateGoalService $createGoalService,
         private readonly GoalProgressService $goalProgressService,
         private readonly CompleteGoalService $completeGoalService,
-        private readonly WorkspaceProjectResolver $workspaceProjectResolver,
+        private readonly WorkspaceResolver $workspaceResolver,
+        private readonly GoalResponseMapper $goalResponseMapper,
     ) {}
 
     public function index(GoalFilterRequest $request): JsonResponse
     {
         $userId = (string) $request->user()->id;
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->authorize('viewAny', [Goal::class, $workspace]);
 
         $dto = GoalFilterDTO::fromArray($request->validated());
-        $goals = $this->listGoalsService->handle($dto, $workspace)
-            ->map(fn(Goal $goal) => $this->presentGoal($goal))
+        $goals = $this->listGoalsService->handle($dto, $workspace->id, $userId)
+            ->map(fn(Goal $goal) => $this->goalResponseMapper->toGoalResponse($goal))
             ->values()
             ->all();
 
@@ -48,7 +50,7 @@ final class GoalController extends Controller
     public function store(StoreGoalRequest $request): JsonResponse
     {
         $userId = (string) $request->user()->id;
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->authorize('create', [Goal::class, $workspace]);
 
@@ -71,27 +73,27 @@ final class GoalController extends Controller
 
         return response()->json([
             'message' => 'Daily goal created successfully.',
-            'data' => $this->presentGoal($goal),
+            'data' => $this->goalResponseMapper->toGoalResponse($goal),
         ], 201);
     }
 
     public function show(Goal $goal): JsonResponse
     {
         $userId = (string) auth()->id();
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
         $this->authorize('view', $goal);
 
         return response()->json([
-            'data' => $this->presentGoal($goal),
+            'data' => $this->goalResponseMapper->toGoalResponse($goal),
         ]);
     }
 
     public function progress(Goal $goal): JsonResponse
     {
         $userId = (string) auth()->id();
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
         $this->authorize('progress', $goal);
@@ -103,7 +105,7 @@ final class GoalController extends Controller
         );
 
         return response()->json([
-            'goal' => $this->presentGoal($goal),
+            'goal' => $this->goalResponseMapper->toGoalResponse($goal),
             'progress' => $viewModel->toArray(),
         ]);
     }
@@ -111,7 +113,7 @@ final class GoalController extends Controller
     public function complete(Goal $goal): JsonResponse
     {
         $userId = (string) auth()->id();
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
         $this->authorize('complete', $goal);
@@ -128,37 +130,10 @@ final class GoalController extends Controller
         return response()->json([
             'message' => 'Daily goal marked complete.',
             'data' => [
-                'goal' => $this->presentGoal($freshGoal),
+                'goal' => $this->goalResponseMapper->toGoalResponse($freshGoal),
                 'completion' => $result,
             ],
         ]);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function presentGoal(Goal $goal): array
-    {
-        $goalDate = $goal->deadline instanceof \DateTimeInterface
-            ? $goal->deadline->format('Y-m-d')
-            : ($goal->deadline ? Carbon::parse($goal->deadline)->format('Y-m-d') : null);
-
-        $completedAt = match (true) {
-            $goal->completed_at instanceof \DateTimeInterface => $goal->completed_at->format('c'),
-            is_string($goal->completed_at) => $goal->completed_at,
-            default => null,
-        };
-
-        return [
-            'id' => $goal->id,
-            'summary' => $goal->title,
-            'description' => $goal->description,
-            'goal_date' => $goalDate,
-            'status' => $goal->status,
-            'completed_at' => $completedAt,
-            'created_at' => $goal->created_at?->toISOString(),
-            'updated_at' => $goal->updated_at?->toISOString(),
-        ];
     }
 
     private function assertGoalBelongsToWorkspace(Goal $goal, string $workspaceProjectId): void

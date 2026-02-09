@@ -11,6 +11,8 @@ trait FiltersByProjectOwnership
      */
     public function scopeOwnedBy(Builder $query, string $projectId, string $userId): Builder
     {
-        return $query->where('project_id', $projectId);
+        return $query
+            ->where('project_id', $projectId)
+            ->whereHas('project', fn(Builder $projectQuery) => $projectQuery->where('user_id', $userId));
     }
 }

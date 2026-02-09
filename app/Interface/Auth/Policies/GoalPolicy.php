@@ -5,12 +5,13 @@ namespace App\Interface\Auth\Policies;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
+use App\Infrastructure\Workspaces\Eloquent\Models\Workspace;
 
 final class GoalPolicy
 {
-    public function viewAny(User $user, Project $project): bool
+    public function viewAny(User $user, Project|Workspace $workspace): bool
     {
-        return $this->ownsProject($user, $project);
+        return $this->ownsWorkspace($user, $workspace);
     }
 
     public function view(User $user, Goal $goal): bool
@@ -18,9 +19,9 @@ final class GoalPolicy
         return $this->ownsGoal($user, $goal);
     }
 
-    public function create(User $user, Project $project): bool
+    public function create(User $user, Project|Workspace $workspace): bool
     {
-        return $this->ownsProject($user, $project);
+        return $this->ownsWorkspace($user, $workspace);
     }
 
     public function update(User $user, Goal $goal): bool
@@ -38,14 +39,14 @@ final class GoalPolicy
         return $this->ownsGoal($user, $goal);
     }
 
-    public function attachTask(User $user, Goal $goal, Project $project): bool
+    public function attachTask(User $user, Goal $goal, Project|Workspace $workspace): bool
     {
-        return $goal->project_id === $project->id && $this->ownsProject($user, $project);
+        return $goal->project_id === $workspace->id && $this->ownsWorkspace($user, $workspace);
     }
 
-    public function detachTask(User $user, Goal $goal, Project $project): bool
+    public function detachTask(User $user, Goal $goal, Project|Workspace $workspace): bool
     {
-        return $goal->project_id === $project->id && $this->ownsProject($user, $project);
+        return $goal->project_id === $workspace->id && $this->ownsWorkspace($user, $workspace);
     }
 
     public function progress(User $user, Goal $goal): bool
@@ -53,9 +54,9 @@ final class GoalPolicy
         return $this->ownsGoal($user, $goal);
     }
 
-    private function ownsProject(User $user, Project $project): bool
+    private function ownsWorkspace(User $user, Project|Workspace $workspace): bool
     {
-        return (string) $project->user_id === (string) $user->getAuthIdentifier();
+        return (string) $workspace->user_id === (string) $user->getAuthIdentifier();
     }
 
     private function ownsGoal(User $user, Goal $goal): bool
@@ -66,6 +67,6 @@ final class GoalPolicy
             $project = $goal->project()->first();
         }
 
-        return $project !== null && $this->ownsProject($user, $project);
+        return $project !== null && $this->ownsWorkspace($user, $project);
     }
 }

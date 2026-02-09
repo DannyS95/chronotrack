@@ -49,9 +49,8 @@ final class TimerService
                 throw new ActiveTimerExists((string) $activeForTask->id, 'task');
             }
 
-            $runningTimers = $this->timerRepository->findRunningTimersForUser($userId, $lockedTask->id);
-
-            foreach ($runningTimers as $runningTimer) {
+            $runningTimer = $this->timerRepository->findRunningTimerVisibleToUser((string) $userId, $lockedTask->id);
+            if ($runningTimer !== null) {
                 $this->timerRepository->pauseActiveTimerForTask($runningTimer->task_id);
             }
 

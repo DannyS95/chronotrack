@@ -12,7 +12,6 @@ use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Mockery;
 use PDOException;
@@ -34,7 +33,7 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('findActiveForTaskLock')
             ->once()->with('task-1')->andReturn($existingTimer);
         $timerRepository->shouldReceive('resumeTimer')->never();
-        $timerRepository->shouldReceive('findRunningTimersForUser')->never();
+        $timerRepository->shouldReceive('findRunningTimerVisibleToUser')->never();
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
@@ -65,7 +64,7 @@ final class TimerServiceTest extends TestCase
             ->once()->with('task-1')->andReturn($pausedTimer);
         $timerRepository->shouldReceive('resumeTimer')
             ->once()->with($pausedTimer)->andReturn($resumedTimer);
-        $timerRepository->shouldReceive('findRunningTimersForUser')->never();
+        $timerRepository->shouldReceive('findRunningTimerVisibleToUser')->never();
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
         $timerRepository->shouldReceive('createRunning')->never();
 
@@ -85,15 +84,13 @@ final class TimerServiceTest extends TestCase
     public function test_start_auto_pauses_other_running_tasks_for_user(): void
     {
         $task = $this->makeTask('task-1', 'project-1', 'goal-1');
-        $otherTimerA = $this->makeTimerWithTask('timer-2', 'task-2', 'project-2', null);
-        $otherTimerB = $this->makeTimerWithTask('timer-3', 'task-3', 'project-1', 'goal-9');
+        $otherTimer = $this->makeTimerWithTask('timer-2', 'task-2', 'project-2', null);
 
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
-        $timerRepository->shouldReceive('findRunningTimersForUser')
-            ->once()->with('1', 'task-1')->andReturn(new Collection([$otherTimerA, $otherTimerB]));
+        $timerRepository->shouldReceive('findRunningTimerVisibleToUser')
+            ->once()->with('1', 'task-1')->andReturn($otherTimer);
         $timerRepository->shouldReceive('pauseActiveTimerForTask')->once()->with('task-2');
-        $timerRepository->shouldReceive('pauseActiveTimerForTask')->once()->with('task-3');
 
         $created = new Timer();
         $timerRepository->shouldReceive('createRunning')
@@ -119,7 +116,7 @@ final class TimerServiceTest extends TestCase
 
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $timerRepository->shouldNotReceive('findActiveForTaskLock');
-        $timerRepository->shouldNotReceive('findRunningTimersForUser');
+        $timerRepository->shouldNotReceive('findRunningTimerVisibleToUser');
         $timerRepository->shouldNotReceive('pauseActiveTimerForTask');
         $timerRepository->shouldNotReceive('createRunning');
 
@@ -142,8 +139,8 @@ final class TimerServiceTest extends TestCase
 
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
-        $timerRepository->shouldReceive('findRunningTimersForUser')
-            ->once()->with('1', 'task-1')->andReturn(new Collection());
+        $timerRepository->shouldReceive('findRunningTimerVisibleToUser')
+            ->once()->with('1', 'task-1')->andReturnNull();
 
         $pdoException = new PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry for key \'timers_user_active_unique\'');
         $queryException = new QueryException('insert into timers ...', [], $pdoException);

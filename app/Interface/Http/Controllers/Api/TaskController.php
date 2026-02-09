@@ -2,7 +2,6 @@
 
 namespace App\Interface\Http\Controllers\Api;
 
-use App\Application\Projects\Services\WorkspaceProjectResolver;
 use App\Application\Tasks\DTO\CreateTaskDTO;
 use App\Application\Tasks\DTO\DeleteTaskDTO;
 use App\Application\Tasks\DTO\TaskFilterDTO;
@@ -12,6 +11,7 @@ use App\Application\Tasks\Services\DeleteTaskService;
 use App\Application\Tasks\Services\ListTasksService;
 use App\Application\Tasks\Services\ShowTaskService;
 use App\Application\Tasks\Services\UpdateTaskService;
+use App\Application\Workspaces\Services\WorkspaceResolver;
 use App\Domain\Tasks\Support\TaskTimerProfile;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
@@ -20,6 +20,7 @@ use App\Interface\Http\Requests\Tasks\StoreTaskRequest;
 use App\Interface\Http\Requests\Tasks\TaskFilterRequest;
 use App\Interface\Http\Requests\Tasks\UpdateTaskRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -31,22 +32,18 @@ final class TaskController extends Controller
         private readonly ShowTaskService $showTaskService,
         private readonly UpdateTaskService $updateTaskService,
         private readonly DeleteTaskService $deleteTaskService,
-        private readonly WorkspaceProjectResolver $workspaceProjectResolver,
+        private readonly WorkspaceResolver $workspaceResolver,
     ) {}
 
     public function storeForGoal(StoreTaskRequest $request, Goal $goal): JsonResponse
     {
         $userId = (string) $request->user()->id;
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
         $this->authorize('view', $goal);
 
-        $validated = $request->validated();
-        $timerProfile = $this->normalizeTimerProfile(
-            $validated['timer_type'],
-            $validated['target_minutes'] ?? null,
-        );
+        $validated = $this->withNormalizedTimerAttributes($request->validated());
 
         $dto = CreateTaskDTO::fromArray([
             'project_id' => $workspace->id,
@@ -54,8 +51,8 @@ final class TaskController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'due_at' => $validated['due_at'] ?? null,
-            'timer_type' => $timerProfile['timer_type'],
-            'target_duration_seconds' => $timerProfile['target_duration_seconds'],
+            'timer_type' => $validated['timer_type'],
+            'target_duration_seconds' => $validated['target_duration_seconds'],
             'user_id' => $userId,
         ]);
 
@@ -70,7 +67,7 @@ final class TaskController extends Controller
     public function indexForGoal(TaskFilterRequest $request, Goal $goal): JsonResponse
     {
         $userId = (string) $request->user()->id;
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
         $this->authorize('view', $goal);
@@ -90,12 +87,12 @@ final class TaskController extends Controller
     public function show(Task $task): JsonResponse
     {
         $userId = (string) auth()->id();
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertTaskBelongsToWorkspace($task, $workspace->id);
         $this->authorize('view', $task);
 
-        $viewModel = $this->showTaskService->handle($workspace, $task, $userId);
+        $viewModel = $this->showTaskService->handle($task, $userId);
 
         return response()->json($viewModel->toArray());
     }
@@ -103,24 +100,12 @@ final class TaskController extends Controller
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         $userId = (string) auth()->id();
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertTaskBelongsToWorkspace($task, $workspace->id);
         $this->authorize('update', $task);
 
-        $attributes = $request->validated();
-
-        if (array_key_exists('timer_type', $attributes)) {
-            $timerProfile = $this->normalizeTimerProfile(
-                $attributes['timer_type'],
-                $attributes['target_minutes'] ?? null,
-            );
-
-            $attributes['timer_type'] = $timerProfile['timer_type'];
-            $attributes['target_duration_seconds'] = $timerProfile['target_duration_seconds'];
-        }
-
-        unset($attributes['target_minutes']);
+        $attributes = $this->withNormalizedTimerAttributes($request->validated());
 
         $dto = new UpdateTaskDTO(
             project_id: $workspace->id,
@@ -140,7 +125,7 @@ final class TaskController extends Controller
     public function destroy(Task $task): JsonResponse
     {
         $userId = (string) auth()->id();
-        $workspace = $this->workspaceProjectResolver->resolve($userId);
+        $workspace = $this->workspaceResolver->resolve($userId);
 
         $this->assertTaskBelongsToWorkspace($task, $workspace->id);
         $this->authorize('delete', $task);
@@ -176,9 +161,33 @@ final class TaskController extends Controller
         try {
             return TaskTimerProfile::normalize($timerType, $targetMinutes);
         } catch (InvalidArgumentException $exception) {
+            $message = $exception->getMessage();
+            $field = str_contains($message, 'Unsupported timer type')
+                ? 'timer_type'
+                : 'target_minutes';
+
             throw ValidationException::withMessages([
-                'timer_type' => [$exception->getMessage()],
+                $field => [$message],
             ]);
         }
     }
+
+    /**
+     * @param array<string, mixed> $validated
+     * @return array<string, mixed>
+     */
+    private function withNormalizedTimerAttributes(array $validated): array
+    {
+        $timerProfile = $this->normalizeTimerProfile(
+            (string) $validated['timer_type'],
+            $validated['target_minutes'] ?? null,
+        );
+
+        return [
+            ...Arr::except($validated, ['target_minutes']),
+            'timer_type' => $timerProfile['timer_type'],
+            'target_duration_seconds' => $timerProfile['target_duration_seconds'],
+        ];
+    }
+
 }

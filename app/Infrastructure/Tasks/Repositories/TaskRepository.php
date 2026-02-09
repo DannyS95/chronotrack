@@ -5,7 +5,6 @@ namespace App\Infrastructure\Tasks\Repositories;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
 use App\Domain\Tasks\ValueObjects\TaskSnapshot;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
-use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -21,12 +20,8 @@ final class TaskRepository implements TaskRepositoryInterface
 
     public function paginateSnapshots(array $filters, string $userId, string $projectId, int $perPage): LengthAwarePaginator
     {
-        $project = Project::query()
-            ->where('id', $projectId)
-            ->firstOrFail();
-
         return Task::applyFilters($filters)
-            ->ownedBy($project->id, $userId)
+            ->ownedBy($projectId, $userId)
             ->with('timers')
             ->paginate($perPage)
             ->through(fn(Task $task) => TaskSnapshot::fromModel($task));
@@ -111,7 +106,7 @@ final class TaskRepository implements TaskRepositoryInterface
     public function countIncompleteByGoal(string $goalId, string $projectId, string $userId): int
     {
         return Task::query()
-            ->where('project_id', $projectId)
+            ->ownedBy($projectId, $userId)
             ->where('goal_id', $goalId)
             ->where('status', '!=', 'done')
             ->count();

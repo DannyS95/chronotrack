@@ -5,12 +5,13 @@ namespace App\Interface\Auth\Policies;
 use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Shared\Persistence\Eloquent\Models\User;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
+use App\Infrastructure\Workspaces\Eloquent\Models\Workspace;
 
 final class TaskPolicy
 {
-    public function viewAny(User $user, ?Project $project = null): bool
+    public function viewAny(User $user, Project|Workspace|null $workspace = null): bool
     {
-        return $project === null || $this->ownsProject($user, $project);
+        return $workspace === null || $this->ownsWorkspace($user, $workspace);
     }
 
     public function view(User $user, Task $task): bool
@@ -18,9 +19,9 @@ final class TaskPolicy
         return $this->ownsTask($user, $task);
     }
 
-    public function create(User $user, Project $project): bool
+    public function create(User $user, Project|Workspace $workspace): bool
     {
-        return $this->ownsProject($user, $project);
+        return $this->ownsWorkspace($user, $workspace);
     }
 
     public function update(User $user, Task $task): bool
@@ -43,9 +44,9 @@ final class TaskPolicy
         return $this->ownsTask($user, $task);
     }
 
-    private function ownsProject(User $user, Project $project): bool
+    private function ownsWorkspace(User $user, Project|Workspace $workspace): bool
     {
-        return (string) $project->user_id === (string) $user->getAuthIdentifier();
+        return (string) $workspace->user_id === (string) $user->getAuthIdentifier();
     }
 
     private function ownsTask(User $user, Task $task): bool

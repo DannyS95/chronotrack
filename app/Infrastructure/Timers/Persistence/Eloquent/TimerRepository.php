@@ -8,10 +8,21 @@ use App\Infrastructure\Timers\Eloquent\Models\Timer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
 final class TimerRepository implements TimerRepositoryInterface
 {
+    /**
+     * Timer visibility is user-scoped with a fallback for legacy rows where user_id is null.
+     */
+    public function findRunningTimerVisibleToUser(string $userId, ?string $excludingTaskId = null): ?Timer
+    {
+        return $this->activeTimersVisibleToUserQuery($userId)
+            ->when($excludingTaskId, fn(Builder $query) => $query->where('task_id', ComparisonOperator::NotEqual->value, $excludingTaskId))
+            ->lockForUpdate()
+            ->latest('started_at')
+            ->first();
+    }
+
     public function findActiveForTaskLock(string $taskId): ?Timer
     {
         return Timer::query()
@@ -36,23 +47,6 @@ final class TimerRepository implements TimerRepositoryInterface
             ->latest('started_at')
             ->lockForUpdate()
             ->first();
-    }
-
-    public function findRunningTimersForUser(string $userId, ?string $excludingTaskId = null): Collection
-    {
-        return Timer::query()
-            ->with('task')
-            ->whereNull('stopped_at')
-            ->when($excludingTaskId, fn($query) => $query->where('task_id', ComparisonOperator::NotEqual->value, $excludingTaskId))
-            ->where(function ($query) use ($userId) {
-                $query->where('user_id', $userId)
-                    ->orWhere(function ($query) use ($userId) {
-                        $query->whereNull('user_id')
-                            ->whereHas('task.project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
-                    });
-            })
-            ->lockForUpdate()
-            ->get();
     }
 
     public function createRunning(string $taskId, int|string $userId): Timer
@@ -109,16 +103,7 @@ final class TimerRepository implements TimerRepositoryInterface
      */
     public function findActiveTimerForUserLock(string $userId): ?Timer
     {
-        return Timer::query()
-            ->with('task')
-            ->whereNull('stopped_at')
-            ->where(function (Builder $query) use ($userId) {
-                $query->where('user_id', $userId)
-                    ->orWhere(function ($query) use ($userId) {
-                        $query->whereNull('user_id')
-                            ->whereHas('task.project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
-                    });
-            })
+        return $this->activeTimersVisibleToUserQuery($userId)
             ->latest('started_at')
             ->lockForUpdate()
             ->first();
@@ -223,16 +208,16 @@ final class TimerRepository implements TimerRepositoryInterface
 
     public function countActiveByProject(string $projectId, string $userId): int
     {
-        return Timer::query()
-            ->whereNull('stopped_at')
-            ->where(function (Builder $query) use ($userId) {
-                $query->where('user_id', $userId)
-                    ->orWhere(function (Builder $nested) use ($userId) {
-                        $nested->whereNull('user_id')
-                            ->whereHas('task.project', fn($projectQuery) => $projectQuery->where('user_id', $userId));
-                    });
-            })
+        return $this->activeTimersVisibleToUserQuery($userId)
             ->whereHas('task', fn(Builder $taskQuery) => $taskQuery->where('project_id', $projectId))
             ->count();
+    }
+
+    private function activeTimersVisibleToUserQuery(string $userId): Builder
+    {
+        return Timer::query()
+            ->with('task')
+            ->whereNull('stopped_at')
+            ->where('user_id', $userId);
     }
 }
