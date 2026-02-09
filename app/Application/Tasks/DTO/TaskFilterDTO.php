@@ -7,8 +7,10 @@ final class TaskFilterDTO
     public function __construct(
         public string $project_id,
         public string $user_id,
+        public ?string $goal_id = null,
         public ?string $title = null,
         public ?string $status = null,
+        public ?string $timer_type = null,
         public ?string $from = null,
         public ?string $to = null,
         public ?string $sort_by = 'created_at',
@@ -20,8 +22,10 @@ final class TaskFilterDTO
     {
         return [
             'project_id' => $this->project_id,
+            'goal_id' => $this->goal_id,
             'title' => $this->title,
             'status' => $this->status,
+            'timer_type' => $this->timer_type,
             'from' => $this->from,
             'to' => $this->to,
             'sort_by' => $this->sort_by,
@@ -35,8 +39,10 @@ final class TaskFilterDTO
         return new self(
             project_id: $attributes['project_id'],
             user_id: $attributes['user_id'],
+            goal_id: $attributes['goal_id'] ?? null,
             title: $attributes['title'] ?? null,
             status: $attributes['status'] ?? null,
+            timer_type: $attributes['timer_type'] ?? null,
             from: $attributes['from'] ?? null,
             to: $attributes['to'] ?? null,
             sort_by: $attributes['sort_by'] ?? 'created_at',

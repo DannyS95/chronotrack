@@ -2,6 +2,7 @@
 
 namespace App\Interface\Http\Controllers\Api;
 
+use App\Application\Projects\Services\WorkspaceProjectResolver;
 use App\Application\Timers\DTO\TimerFilterDTO;
 use App\Application\Timers\Services\ListTimersService;
 use App\Application\Timers\Services\TimerService;
@@ -14,10 +15,15 @@ use Illuminate\Http\Request;
 
 final class TimerController extends Controller
 {
-    public function __construct(private readonly TimerService $service, private readonly ListTimersService $listTimersService) {}
+    public function __construct(
+        private readonly TimerService $service,
+        private readonly ListTimersService $listTimersService,
+        private readonly WorkspaceProjectResolver $workspaceProjectResolver,
+    ) {}
 
     public function index(TimerFilterRequest $request, Task $task)
     {
+        $this->assertTaskBelongsToWorkspace($task, (string) $request->user()->id);
         $this->authorize('viewAny', [Timer::class, $task]);
 
         $dto = TimerFilterDTO::fromArray([
@@ -33,6 +39,7 @@ final class TimerController extends Controller
 
     public function start(Request $request, Task $task)
     {
+        $this->assertTaskBelongsToWorkspace($task, (string) $request->user()->id);
         $this->authorize('start', [Timer::class, $task]);
 
         $timer = $this->service->start($task, (string) $request->user()->id);
@@ -45,6 +52,7 @@ final class TimerController extends Controller
 
     public function pause(Request $request, Task $task)
     {
+        $this->assertTaskBelongsToWorkspace($task, (string) $request->user()->id);
         $this->authorize('pause', [Timer::class, $task]);
 
         $timer = $this->service->pause($task, (string) $request->user()->id);
@@ -56,6 +64,7 @@ final class TimerController extends Controller
 
     public function stop(Request $request, Task $task)
     {
+        $this->assertTaskBelongsToWorkspace($task, (string) $request->user()->id);
         $this->authorize('stop', [Timer::class, $task]);
 
         $timer = $this->service->stop(
@@ -92,5 +101,12 @@ final class TimerController extends Controller
         }
 
         return response()->json(TimerViewModel::fromModel($timer)->toArray());
+    }
+
+    private function assertTaskBelongsToWorkspace(Task $task, string $userId): void
+    {
+        $workspace = $this->workspaceProjectResolver->resolve($userId);
+
+        abort_unless((string) $task->project_id === (string) $workspace->id, 404);
     }
 }

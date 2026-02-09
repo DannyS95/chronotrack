@@ -2,8 +2,7 @@
 
 namespace App\Interface\Http\Controllers\Api;
 
-use Illuminate\Http\JsonResponse;
-use App\Interface\Http\Controllers\Controller;
+use App\Application\Projects\Services\WorkspaceProjectResolver;
 use App\Application\Tasks\DTO\CreateTaskDTO;
 use App\Application\Tasks\DTO\DeleteTaskDTO;
 use App\Application\Tasks\DTO\TaskFilterDTO;
@@ -13,13 +12,18 @@ use App\Application\Tasks\Services\DeleteTaskService;
 use App\Application\Tasks\Services\ListTasksService;
 use App\Application\Tasks\Services\ShowTaskService;
 use App\Application\Tasks\Services\UpdateTaskService;
-use App\Infrastructure\Projects\Eloquent\Models\Project;
+use App\Domain\Tasks\Support\TaskTimerProfile;
+use App\Infrastructure\Goals\Eloquent\Models\Goal;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
+use App\Interface\Http\Controllers\Controller;
 use App\Interface\Http\Requests\Tasks\StoreTaskRequest;
 use App\Interface\Http\Requests\Tasks\TaskFilterRequest;
 use App\Interface\Http\Requests\Tasks\UpdateTaskRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
-class TaskController extends Controller
+final class TaskController extends Controller
 {
     public function __construct(
         private readonly CreateTaskService $createTaskService,
@@ -27,32 +31,32 @@ class TaskController extends Controller
         private readonly ShowTaskService $showTaskService,
         private readonly UpdateTaskService $updateTaskService,
         private readonly DeleteTaskService $deleteTaskService,
+        private readonly WorkspaceProjectResolver $workspaceProjectResolver,
     ) {}
 
-    public function show(Project $project, Task $task): JsonResponse
+    public function storeForGoal(StoreTaskRequest $request, Goal $goal): JsonResponse
     {
-        $this->assertTaskBelongsToProject($project, $task);
-        $this->authorize('view', $task);
+        $userId = (string) $request->user()->id;
+        $workspace = $this->workspaceProjectResolver->resolve($userId);
 
-        /** @var \Illuminate\Contracts\Auth\Guard $auth */
-        $auth = auth();
+        $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
+        $this->authorize('view', $goal);
 
-        $viewModel = $this->showTaskService->handle($project, $task, (string) $auth->id());
-
-        return response()->json($viewModel->toArray());
-    }
-
-    public function store(StoreTaskRequest $request, Project $project): JsonResponse
-    {
-        $this->authorize('create', [Task::class, $project]);
-
-        /** @var \Illuminate\Contracts\Auth\Guard $auth */
-        $auth = auth();
+        $validated = $request->validated();
+        $timerProfile = $this->normalizeTimerProfile(
+            $validated['timer_type'],
+            $validated['target_minutes'] ?? null,
+        );
 
         $dto = CreateTaskDTO::fromArray([
-            ...$request->validated(),
-            'project_id' => $project->id,
-            'user_id' => (string) $auth->id(),
+            'project_id' => $workspace->id,
+            'goal_id' => $goal->id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'due_at' => $validated['due_at'] ?? null,
+            'timer_type' => $timerProfile['timer_type'],
+            'target_duration_seconds' => $timerProfile['target_duration_seconds'],
+            'user_id' => $userId,
         ]);
 
         $task = $this->createTaskService->handle($dto);
@@ -63,17 +67,19 @@ class TaskController extends Controller
         ], 201);
     }
 
-    public function index(TaskFilterRequest $request, Project $project): JsonResponse
+    public function indexForGoal(TaskFilterRequest $request, Goal $goal): JsonResponse
     {
-        $this->authorize('viewAny', [Task::class, $project]);
+        $userId = (string) $request->user()->id;
+        $workspace = $this->workspaceProjectResolver->resolve($userId);
 
-        /** @var \Illuminate\Contracts\Auth\Guard $auth */
-        $auth = auth();
+        $this->assertGoalBelongsToWorkspace($goal, $workspace->id);
+        $this->authorize('view', $goal);
 
         $dto = TaskFilterDTO::fromArray([
             ...$request->validated(),
-            'project_id' => $project->id,
-            'user_id'    => (string) $auth->id(),
+            'project_id' => $workspace->id,
+            'goal_id' => $goal->id,
+            'user_id' => $userId,
         ]);
 
         $tasks = $this->listTasksService->handle($dto);
@@ -81,19 +87,46 @@ class TaskController extends Controller
         return response()->json($tasks->toArray());
     }
 
-    public function update(UpdateTaskRequest $request, Project $project, Task $task): JsonResponse
+    public function show(Task $task): JsonResponse
     {
-        $this->assertTaskBelongsToProject($project, $task);
+        $userId = (string) auth()->id();
+        $workspace = $this->workspaceProjectResolver->resolve($userId);
+
+        $this->assertTaskBelongsToWorkspace($task, $workspace->id);
+        $this->authorize('view', $task);
+
+        $viewModel = $this->showTaskService->handle($workspace, $task, $userId);
+
+        return response()->json($viewModel->toArray());
+    }
+
+    public function update(UpdateTaskRequest $request, Task $task): JsonResponse
+    {
+        $userId = (string) auth()->id();
+        $workspace = $this->workspaceProjectResolver->resolve($userId);
+
+        $this->assertTaskBelongsToWorkspace($task, $workspace->id);
         $this->authorize('update', $task);
 
-        /** @var \Illuminate\Contracts\Auth\Guard $auth */
-        $auth = auth();
+        $attributes = $request->validated();
+
+        if (array_key_exists('timer_type', $attributes)) {
+            $timerProfile = $this->normalizeTimerProfile(
+                $attributes['timer_type'],
+                $attributes['target_minutes'] ?? null,
+            );
+
+            $attributes['timer_type'] = $timerProfile['timer_type'];
+            $attributes['target_duration_seconds'] = $timerProfile['target_duration_seconds'];
+        }
+
+        unset($attributes['target_minutes']);
 
         $dto = new UpdateTaskDTO(
-            project_id: $project->id,
+            project_id: $workspace->id,
             task_id: $task->id,
-            user_id: (string) $auth->id(),
-            attributes: $request->validated(),
+            user_id: $userId,
+            attributes: $attributes,
         );
 
         $updatedTask = $this->updateTaskService->handle($dto);
@@ -104,18 +137,18 @@ class TaskController extends Controller
         ]);
     }
 
-    public function destroy(Project $project, Task $task): JsonResponse
+    public function destroy(Task $task): JsonResponse
     {
-        $this->assertTaskBelongsToProject($project, $task);
+        $userId = (string) auth()->id();
+        $workspace = $this->workspaceProjectResolver->resolve($userId);
+
+        $this->assertTaskBelongsToWorkspace($task, $workspace->id);
         $this->authorize('delete', $task);
 
-        /** @var \Illuminate\Contracts\Auth\Guard $auth */
-        $auth = auth();
-
         $dto = new DeleteTaskDTO(
-            project_id: $project->id,
+            project_id: $workspace->id,
             task_id: $task->id,
-            user_id: (string) $auth->id(),
+            user_id: $userId,
         );
 
         $this->deleteTaskService->handle($dto);
@@ -125,8 +158,27 @@ class TaskController extends Controller
         ]);
     }
 
-    private function assertTaskBelongsToProject(Project $project, Task $task): void
+    private function assertGoalBelongsToWorkspace(Goal $goal, string $workspaceProjectId): void
     {
-        abort_unless($task->project_id === $project->id, 404);
+        abort_unless((string) $goal->project_id === (string) $workspaceProjectId, 404);
+    }
+
+    private function assertTaskBelongsToWorkspace(Task $task, string $workspaceProjectId): void
+    {
+        abort_unless((string) $task->project_id === (string) $workspaceProjectId, 404);
+    }
+
+    /**
+     * @return array{timer_type:string,target_duration_seconds:int}
+     */
+    private function normalizeTimerProfile(string $timerType, mixed $targetMinutes): array
+    {
+        try {
+            return TaskTimerProfile::normalize($timerType, $targetMinutes);
+        } catch (InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'timer_type' => [$exception->getMessage()],
+            ]);
+        }
     }
 }

@@ -7,11 +7,9 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use App\Domain\Reports\Models\Report;
 use App\Domain\Reports\Policies\ReportPolicy;
 use App\Interface\Auth\Policies\GoalPolicy;
-use App\Interface\Auth\Policies\ProjectPolicy;
 use App\Interface\Auth\Policies\TaskPolicy;
 use App\Interface\Auth\Policies\TimerPolicy;
 use App\Infrastructure\Goals\Eloquent\Models\Goal;
-use App\Infrastructure\Projects\Eloquent\Models\Project;
 use App\Infrastructure\Tasks\Eloquent\Models\Task;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 
@@ -19,7 +17,6 @@ class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
         Report::class => ReportPolicy::class,
-        Project::class => ProjectPolicy::class,
         Goal::class    => GoalPolicy::class,
         Task::class   => TaskPolicy::class,
         Timer::class  => TimerPolicy::class,

@@ -3,7 +3,6 @@
 namespace App\Application\Goals\Services;
 
 use App\Application\Goals\DTO\CompleteGoalDTO;
-use App\Application\Projects\Services\ProjectLifecycleService;
 use App\Domain\Common\Contracts\TransactionRunner;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Goals\ValueObjects\GoalSnapshot;
@@ -18,7 +17,6 @@ final class CompleteGoalService
         private GoalRepositoryInterface $goalRepository,
         private TaskRepositoryInterface $taskRepository,
         private TimerRepositoryInterface $timerRepository,
-        private ProjectLifecycleService $projectLifecycleService,
         private TransactionRunner $transactionRunner,
     ) {}
 
@@ -75,8 +73,6 @@ final class CompleteGoalService
                 ],
             ];
         });
-
-        $this->projectLifecycleService->refresh($dto->projectId, $dto->userId);
 
         return $result;
     }

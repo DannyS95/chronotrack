@@ -16,6 +16,7 @@ final class TaskFilterRequest extends FormRequest
         return [
             'title'     => ['nullable', 'string'],
             'status'    => ['nullable', 'in:active,done'],
+            'timer_type' => ['nullable', 'in:pomodoro,custom,hourglass'],
             'from'      => ['nullable', 'date'],
             'to'        => ['nullable', 'date'],
             'sort_by'   => ['nullable', 'in:due_at,last_activity_at,created_at'],

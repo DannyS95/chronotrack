@@ -7,6 +7,7 @@ class GoalFilterDTO
     public function __construct(
         public readonly ?string $status = null,
         public readonly ?string $id = null,
+        public readonly ?string $goal_date = null,
         public readonly ?string $from = null,
         public readonly ?string $to = null,
         public readonly ?string $deadline = null,
@@ -20,6 +21,7 @@ class GoalFilterDTO
         return [
             'status'     => $this->status,
             'id'         => $this->id,
+            'goal_date'  => $this->goal_date,
             'from'       => $this->from,
             'to'         => $this->to,
             'deadline'   => $this->deadline,
@@ -34,6 +36,7 @@ class GoalFilterDTO
         return new self(
             status: $attributes['status'] ?? null,
             id: $attributes['id'] ?? null,
+            goal_date: $attributes['goal_date'] ?? null,
             from: $attributes['from'] ?? null,
             to: $attributes['to'] ?? null,
             deadline: $attributes['deadline'] ?? null,

@@ -52,21 +52,6 @@ final class TimerService
             $runningTimers = $this->timerRepository->findRunningTimersForUser($userId, $lockedTask->id);
 
             foreach ($runningTimers as $runningTimer) {
-                $otherTask = optional($runningTimer->task);
-                $otherProjectId = $otherTask?->project_id;
-                $otherGoalId = $otherTask?->goal_id;
-
-                $sameProject = $otherProjectId !== null
-                    && (string) $otherProjectId === (string) $lockedTask->project_id;
-
-                if ($sameProject) {
-                    $scope = ($lockedTask->goal_id !== null && $lockedTask->goal_id === $otherGoalId)
-                        ? 'goal'
-                        : 'project';
-
-                    throw new ActiveTimerExists((string) $runningTimer->id, $scope);
-                }
-
                 $this->timerRepository->pauseActiveTimerForTask($runningTimer->task_id);
             }
 
@@ -210,16 +195,6 @@ final class TimerService
     {
         if ($conflictingTimer->task_id === $lockedTask->id) {
             return 'task';
-        }
-
-        $conflictingTask = optional($conflictingTimer->task);
-
-        if ($conflictingTask && (string) $conflictingTask->project_id === (string) $lockedTask->project_id) {
-            if ($lockedTask->goal_id !== null && $lockedTask->goal_id === $conflictingTask->goal_id) {
-                return 'goal';
-            }
-
-            return 'project';
         }
 
         return 'timer';

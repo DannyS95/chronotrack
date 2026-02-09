@@ -82,17 +82,18 @@ final class TimerServiceTest extends TestCase
         $this->assertSame($resumedTimer, $result);
     }
 
-    public function test_start_pauses_timers_from_other_projects(): void
+    public function test_start_auto_pauses_other_running_tasks_for_user(): void
     {
         $task = $this->makeTask('task-1', 'project-1', 'goal-1');
-        $otherTimer = $this->makeTimerWithTask('timer-2', 'task-2', 'project-2', 'goal-9');
+        $otherTimerA = $this->makeTimerWithTask('timer-2', 'task-2', 'project-2', null);
+        $otherTimerB = $this->makeTimerWithTask('timer-3', 'task-3', 'project-1', 'goal-9');
 
         $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
         $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
         $timerRepository->shouldReceive('findRunningTimersForUser')
-            ->once()->with('1', 'task-1')->andReturn(new Collection([$otherTimer]));
-        $timerRepository->shouldReceive('pauseActiveTimerForTask')
-            ->once()->with('task-2');
+            ->once()->with('1', 'task-1')->andReturn(new Collection([$otherTimerA, $otherTimerB]));
+        $timerRepository->shouldReceive('pauseActiveTimerForTask')->once()->with('task-2');
+        $timerRepository->shouldReceive('pauseActiveTimerForTask')->once()->with('task-3');
 
         $created = new Timer();
         $timerRepository->shouldReceive('createRunning')
@@ -109,84 +110,6 @@ final class TimerServiceTest extends TestCase
         $result = $service->start($task, '1');
 
         $this->assertSame($created, $result);
-    }
-
-    public function test_start_throws_when_timer_running_in_same_goal(): void
-    {
-        $task = $this->makeTask('task-1', 'project-1', 'goal-1');
-        $otherTimer = $this->makeTimerWithTask('timer-2', 'task-2', 'project-1', 'goal-1');
-
-        $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
-        $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
-        $timerRepository->shouldReceive('findRunningTimersForUser')
-            ->once()->with('1', 'task-1')->andReturn(new Collection([$otherTimer]));
-        $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
-        $timerRepository->shouldReceive('createRunning')->never();
-
-        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
-        $taskRepository->shouldReceive('lockOwnedForUpdate')
-            ->once()
-            ->with('task-1', 'project-1', '1')
-            ->andReturn($task);
-
-        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
-
-        $this->expectException(ActiveTimerExists::class);
-        $this->expectExceptionMessage('A timer is already running for this goal.');
-
-        $service->start($task, '1');
-    }
-
-    public function test_start_throws_when_timer_running_in_same_project_different_goal(): void
-    {
-        $task = $this->makeTask('task-1', 'project-1', 'goal-1');
-        $otherTimer = $this->makeTimerWithTask('timer-2', 'task-2', 'project-1', 'goal-2');
-
-        $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
-        $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
-        $timerRepository->shouldReceive('findRunningTimersForUser')
-            ->once()->with('1', 'task-1')->andReturn(new Collection([$otherTimer]));
-        $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
-        $timerRepository->shouldReceive('createRunning')->never();
-
-        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
-        $taskRepository->shouldReceive('lockOwnedForUpdate')
-            ->once()
-            ->with('task-1', 'project-1', '1')
-            ->andReturn($task);
-
-        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
-
-        $this->expectException(ActiveTimerExists::class);
-        $this->expectExceptionMessage('A timer is already running for this project.');
-
-        $service->start($task, '1');
-    }
-
-    public function test_start_throws_when_timer_running_in_same_project_without_goal(): void
-    {
-        $task = $this->makeTask('task-1', 'project-1', null);
-        $otherTimer = $this->makeTimerWithTask('timer-2', 'task-2', 'project-1', null);
-
-        $timerRepository = Mockery::mock(TimerRepositoryInterface::class);
-        $timerRepository->shouldReceive('findActiveForTaskLock')->once()->with('task-1')->andReturnNull();
-        $timerRepository->shouldReceive('findRunningTimersForUser')
-            ->once()->with('1', 'task-1')->andReturn(new Collection([$otherTimer]));
-        $timerRepository->shouldReceive('pauseActiveTimerForTask')->never();
-        $timerRepository->shouldReceive('createRunning')->never();
-
-        $taskRepository = Mockery::mock(TaskRepositoryInterface::class);
-        $taskRepository->shouldReceive('lockOwnedForUpdate')
-            ->once()
-            ->with('task-1', 'project-1', '1')
-            ->andReturn($task);
-
-        $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
-
-        $this->expectException(ActiveTimerExists::class);
-        $this->expectExceptionMessage('A timer is already running for this project.');
-
-        $service->start($task, '1');
     }
 
     public function test_start_fails_when_task_completed(): void
@@ -213,7 +136,7 @@ final class TimerServiceTest extends TestCase
         $service->start($task, '1');
     }
 
-    public function test_start_translates_unique_constraint_violation_to_conflict(): void
+    public function test_start_translates_unique_constraint_violation_to_generic_conflict(): void
     {
         $task = $this->makeTask('task-1', 'project-1', 'goal-1');
 
@@ -222,7 +145,7 @@ final class TimerServiceTest extends TestCase
         $timerRepository->shouldReceive('findRunningTimersForUser')
             ->once()->with('1', 'task-1')->andReturn(new Collection());
 
-        $pdoException = new PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'user\' for key \'timers_user_active_unique\'');
+        $pdoException = new PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry for key \'timers_user_active_unique\'');
         $queryException = new QueryException('insert into timers ...', [], $pdoException);
 
         $timerRepository->shouldReceive('createRunning')
@@ -232,7 +155,7 @@ final class TimerServiceTest extends TestCase
         $conflictingTimer->id = 'timer-99';
         $conflictingTimer->task_id = 'task-2';
 
-        $conflictingTask = $this->makeTask('task-2', 'project-1', 'goal-1');
+        $conflictingTask = $this->makeTask('task-2', 'project-3', 'goal-7');
         $conflictingTimer->setRelation('task', $conflictingTask);
 
         $timerRepository->shouldReceive('findActiveTimerForUserLock')
@@ -247,7 +170,7 @@ final class TimerServiceTest extends TestCase
         $service = new TimerService($timerRepository, $this->transactionRunner(), $taskRepository);
 
         $this->expectException(ActiveTimerExists::class);
-        $this->expectExceptionMessage('A timer is already running for this goal.');
+        $this->expectExceptionMessage('Another timer is already running.');
 
         $service->start($task, '1');
     }

@@ -17,6 +17,10 @@ final class TaskSnapshot
         public readonly string $title,
         public readonly ?string $description,
         public readonly ?string $status,
+        public readonly string $timerType,
+        public readonly ?int $targetDurationSeconds,
+        public readonly ?string $targetDurationHuman,
+        public readonly ?int $progressPercent,
         public readonly ?string $dueAt,
         public readonly ?string $lastActivityAt,
         public readonly ?string $createdAt,
@@ -51,6 +55,17 @@ final class TaskSnapshot
             : ($storedSeconds > 0 ? $storedSeconds : $fallbackSeconds);
         $accumulatedHuman = $accumulatedSeconds > 0 ? TimerDurations::humanizeSeconds($accumulatedSeconds) : null;
 
+        $timerType = (string) ($task->timer_type ?? 'custom');
+        $targetDurationSeconds = $task->target_duration_seconds !== null
+            ? max(0, (int) $task->target_duration_seconds)
+            : null;
+        $targetDurationHuman = $targetDurationSeconds !== null && $targetDurationSeconds > 0
+            ? TimerDurations::humanizeSeconds($targetDurationSeconds)
+            : null;
+        $progressPercent = $targetDurationSeconds !== null && $targetDurationSeconds > 0
+            ? min(100, (int) round(($accumulatedSeconds / $targetDurationSeconds) * 100))
+            : null;
+
         return new self(
             id: $task->id,
             projectId: $task->project_id,
@@ -58,6 +73,10 @@ final class TaskSnapshot
             title: $task->title,
             description: $task->description,
             status: $task->status,
+            timerType: $timerType,
+            targetDurationSeconds: $targetDurationSeconds,
+            targetDurationHuman: $targetDurationHuman,
+            progressPercent: $progressPercent,
             dueAt: $formatDate($task->due_at),
             lastActivityAt: $formatDate(self::determineLastActivity($task, $timers)),
             createdAt: $formatDate($task->created_at),

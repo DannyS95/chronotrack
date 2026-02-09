@@ -19,11 +19,14 @@ final class TaskViewModel
     {
         return [
             'id'               => $this->snapshot->id,
-            'project_id'       => $this->snapshot->projectId,
             'goal_id'          => $this->snapshot->goalId,
             'title'            => $this->snapshot->title,
             'description'      => $this->snapshot->description,
             'status'           => $this->snapshot->status,
+            'timer_type'       => $this->snapshot->timerType,
+            'target_duration_seconds' => $this->snapshot->targetDurationSeconds,
+            'target_duration_human' => $this->snapshot->targetDurationHuman,
+            'progress_percent' => $this->snapshot->progressPercent,
             'due_at'           => $this->snapshot->dueAt,
             'last_activity_at' => $this->snapshot->lastActivityAt,
             'created_at'       => $this->snapshot->createdAt,

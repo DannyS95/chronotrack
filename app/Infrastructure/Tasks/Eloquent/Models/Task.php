@@ -29,11 +29,18 @@ final class Task extends BaseModel
         'due_at',
         'last_activity_at',
         'status',
+        'timer_type',
+        'target_duration_seconds',
         'time_spent_seconds',
     ];
 
     protected $keyType = 'string';
     public $incrementing = false;
+
+    protected $casts = [
+        'target_duration_seconds' => 'integer',
+        'time_spent_seconds' => 'integer',
+    ];
 
     public function project(): BelongsTo
     {
@@ -66,6 +73,7 @@ final class Task extends BaseModel
             'description'     => 'like',
             'priority'        => 'equals',
             'status'          => 'equals',
+            'timer_type'      => 'equals',
 
             // Due date filters
             'due_from'        => 'after.due_at',

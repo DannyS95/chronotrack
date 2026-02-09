@@ -2,7 +2,6 @@
 
 use App\Interface\Http\Controllers\Api\AuthController;
 use App\Interface\Http\Controllers\Api\GoalController;
-use App\Interface\Http\Controllers\Api\ProjectController;
 use App\Interface\Http\Controllers\Api\TaskController;
 use App\Interface\Http\Controllers\Api\TimerController;
 use Illuminate\Support\Facades\Route;
@@ -15,40 +14,29 @@ Route::middleware(['auth:sanctum', 'throttle:auth-session'])->group(function () 
     Route::post('/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
 });
 
-Route::middleware(['auth:sanctum'])->prefix('projects')->name('projects.')->group(function () {
-    Route::middleware('throttle:projects')->group(function () {
-        Route::get('/', [ProjectController::class, 'index'])->name('index');
-        Route::post('/', [ProjectController::class, 'store'])->name('store');
-        Route::get('{project}', [ProjectController::class, 'show'])->name('show');
-        Route::get('{project}/summary', [ProjectController::class, 'summary'])->name('summary');
-        Route::post('{project}/complete', [ProjectController::class, 'complete'])->name('complete');
-        Route::delete('{project}', [ProjectController::class, 'destroy'])->name('destroy');
+Route::middleware(['auth:sanctum', 'throttle:goals'])
+    ->prefix('daily-goals')
+    ->name('daily-goals.')
+    ->group(function () {
+        Route::get('/', [GoalController::class, 'index'])->name('index');
+        Route::post('/', [GoalController::class, 'store'])->name('store');
+        Route::get('{goal}', [GoalController::class, 'show'])->name('show');
+        Route::get('{goal}/progress', [GoalController::class, 'progress'])->name('progress');
+        Route::post('{goal}/complete', [GoalController::class, 'complete'])->name('complete');
+
+        Route::middleware('throttle:tasks')
+            ->prefix('{goal}/tasks')
+            ->name('tasks.')
+            ->group(function () {
+                Route::post('/', [TaskController::class, 'storeForGoal'])->name('store');
+                Route::get('/', [TaskController::class, 'indexForGoal'])->name('index');
+            });
     });
 
-    Route::middleware('throttle:tasks')
-        ->prefix('{project}/tasks')
-        ->name('tasks.')
-        ->group(function () {
-            Route::post('/', [TaskController::class, 'store'])->name('store');
-            Route::get('/', [TaskController::class, 'index'])->name('index');
-            Route::get('{task}', [TaskController::class, 'show'])->name('show');
-            Route::patch('{task}', [TaskController::class, 'update'])->name('update');
-            Route::delete('{task}', [TaskController::class, 'destroy'])->name('destroy');
-        });
-
-    Route::scopeBindings()
-        ->middleware('throttle:goals')
-        ->group(function () {
-            Route::prefix('{project}/goals')->name('goals.')->group(function () {
-                Route::get('/', [GoalController::class, 'index'])->name('index');
-                Route::post('/', [GoalController::class, 'store'])->name('store');
-                Route::get('{goal}', [GoalController::class, 'show'])->name('show');
-                Route::get('{goal}/progress', [GoalController::class, 'progress'])->name('progress');
-                Route::post('{goal}/complete', [GoalController::class, 'complete'])->name('complete');
-                Route::post('{goal}/tasks/{task}', [GoalController::class, 'attach'])->name('tasks.attach');
-                Route::delete('{goal}/tasks/{task}', [GoalController::class, 'detach'])->name('tasks.detach');
-            });
-        });
+Route::middleware(['auth:sanctum', 'throttle:tasks'])->prefix('tasks')->name('tasks.')->group(function () {
+    Route::get('{task}', [TaskController::class, 'show'])->name('show');
+    Route::patch('{task}', [TaskController::class, 'update'])->name('update');
+    Route::delete('{task}', [TaskController::class, 'destroy'])->name('destroy');
 });
 
 Route::middleware(['auth:sanctum', 'throttle:timer-actions'])->prefix('tasks')->group(function () {

@@ -16,8 +16,12 @@ final class GoalFilterRequest extends FormRequest
         return [
             'id' => ['nullable', 'string', 'uuid'],
             'status'          => ['sometimes', 'in:active,dormant,dropped,complete'],
+            'goal_date'       => ['sometimes', 'date_format:Y-m-d'],
             'deadline'        => ['sometimes', 'date'],
-            'completion_rule' => ['sometimes', 'in:task_based,deadline_based,hybrid'],
+            'sort_by'         => ['sometimes', 'in:deadline,created_at,updated_at,title'],
+            'order'           => ['sometimes', 'in:asc,desc'],
+            'per_page'        => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
     }
+
 }
