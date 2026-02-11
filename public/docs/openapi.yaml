@@ -1,0 +1,972 @@
+openapi: 3.0.3
+info:
+  title: ChronoTrack API
+  version: 1.0.0
+  description: |
+    ChronoTrack daily goals, tasks, and timers API.
+servers:
+  - url: /api
+tags:
+  - name: Auth
+  - name: Goals
+  - name: Tasks
+  - name: Timers
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /me:
+    get:
+      tags: [Auth]
+      summary: Current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /logout:
+    post:
+      tags: [Auth]
+      summary: Logout current token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /daily-goals:
+    get:
+      tags: [Goals]
+      summary: List daily goals
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: status
+          schema: { type: string, enum: [active, dormant, dropped, complete] }
+        - in: query
+          name: goal_date
+          schema: { type: string, format: date }
+        - in: query
+          name: deadline
+          schema: { type: string, format: date-time }
+        - in: query
+          name: sort_by
+          schema: { type: string, enum: [deadline, created_at, updated_at, title] }
+        - in: query
+          name: order
+          schema: { type: string, enum: [asc, desc] }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Goals list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Goal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Goals]
+      summary: Create daily goal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoalRequest'
+      responses:
+        '201':
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    $ref: '#/components/schemas/Goal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /daily-goals/{goal}:
+    get:
+      tags: [Goals]
+      summary: Show goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+      responses:
+        '200':
+          description: Goal data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Goal'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /daily-goals/{goal}/progress:
+    get:
+      tags: [Goals]
+      summary: Goal progress
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+      responses:
+        '200':
+          description: Goal progress data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  goal:
+                    $ref: '#/components/schemas/Goal'
+                  progress:
+                    $ref: '#/components/schemas/GoalProgress'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /daily-goals/{goal}/complete:
+    post:
+      tags: [Goals]
+      summary: Complete goal and cascade task/timer completion
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+      responses:
+        '200':
+          description: Goal completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      goal:
+                        $ref: '#/components/schemas/Goal'
+                      completion:
+                        $ref: '#/components/schemas/GoalCompletion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /daily-goals/{goal}/tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks for a goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+        - in: query
+          name: title
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string, enum: [active, done] }
+        - in: query
+          name: timer_type
+          schema: { type: string, enum: [pomodoro, custom, hourglass] }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: sort_by
+          schema: { type: string, enum: [due_at, last_activity_at, created_at] }
+        - in: query
+          name: order
+          schema: { type: string, enum: [asc, desc] }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: Task list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Tasks]
+      summary: Create task for goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/GoalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tasks/{task}:
+    get:
+      tags: [Tasks]
+      summary: Show task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Tasks]
+      summary: Update task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  data:
+                    $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Tasks]
+      summary: Delete task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/{task}/timers:
+    get:
+      tags: [Timers]
+      summary: List timers for a task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+        - in: query
+          name: id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: task_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: started_after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: started_before
+          schema: { type: string, format: date-time }
+        - in: query
+          name: stopped_after
+          schema: { type: string, format: date-time }
+        - in: query
+          name: stopped_before
+          schema: { type: string, format: date-time }
+        - in: query
+          name: active
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Timer list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimerCollection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/{task}/timers/start:
+    post:
+      tags: [Timers]
+      summary: Start or resume timer for task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '201':
+          description: Timer started/resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timer'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tasks/{task}/timers/pause:
+    post:
+      tags: [Timers]
+      summary: Pause active timer for task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Timer paused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timer'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tasks/{task}/timers/stop:
+    post:
+      tags: [Timers]
+      summary: Stop active timer for task
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Timer stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timer'
+        '204':
+          description: No active timer on task
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /timers/active:
+    get:
+      tags: [Timers]
+      summary: Active timer for current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active timer payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activeTimer:
+                    oneOf:
+                      - $ref: '#/components/schemas/Timer'
+                      - type: 'null'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /timers/stop:
+    post:
+      tags: [Timers]
+      summary: Stop current active timer for user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current timer stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Timer'
+        '204':
+          description: No active timer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+
+  parameters:
+    GoalId:
+      in: path
+      name: goal
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TaskId:
+      in: path
+      name: task
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Unauthenticated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    AuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password, password_confirmation]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        password_confirmation:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateGoalRequest:
+      type: object
+      properties:
+        summary:
+          type: string
+          maxLength: 255
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, dormant, complete]
+        goal_date:
+          type: string
+          format: date
+        deadline:
+          type: string
+          format: date-time
+      description: Provide either summary or title, and either goal_date or deadline.
+
+    Goal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        summary:
+          type: string
+        description:
+          type: string
+          nullable: true
+        goal_date:
+          type: string
+          format: date
+          nullable: true
+        deadline_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        time_remaining_seconds:
+          type: integer
+          nullable: true
+        is_overdue:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    GoalProgressTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          nullable: true
+        active_since:
+          type: string
+          format: date-time
+          nullable: true
+        accumulated_seconds:
+          type: integer
+        accumulated_human:
+          type: string
+          nullable: true
+
+    GoalProgress:
+      type: object
+      properties:
+        goal_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_tasks:
+          type: integer
+        completed_tasks:
+          type: integer
+        percent_complete:
+          type: integer
+        active_since:
+          type: string
+          format: date-time
+          nullable: true
+        accumulated_seconds:
+          type: integer
+        accumulated_human:
+          type: string
+          nullable: true
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoalProgressTask'
+
+    GoalCompletion:
+      type: object
+      properties:
+        goal_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        cascade:
+          type: object
+          properties:
+            tasks_marked_complete:
+              type: integer
+            timers_stopped:
+              type: integer
+
+    CreateTaskRequest:
+      type: object
+      required: [title, timer_type]
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        timer_type:
+          type: string
+          enum: [pomodoro, custom, hourglass]
+        target_minutes:
+          type: integer
+          minimum: 1
+          maximum: 720
+          nullable: true
+      description: target_minutes required for custom/hourglass by business rules.
+
+    UpdateTaskRequest:
+      type: object
+      required: [timer_type]
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [active, done]
+        goal_id:
+          type: string
+          format: uuid
+          nullable: true
+        timer_type:
+          type: string
+          enum: [pomodoro, custom, hourglass]
+        target_minutes:
+          type: integer
+          minimum: 1
+          maximum: 720
+          nullable: true
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        goal_id:
+          type: string
+          format: uuid
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        timer_type:
+          type: string
+        target_duration_seconds:
+          type: integer
+          nullable: true
+        target_duration_human:
+          type: string
+          nullable: true
+        progress_percent:
+          type: integer
+          nullable: true
+        due_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_activity_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        active_since:
+          type: string
+          format: date-time
+          nullable: true
+        accumulated_seconds:
+          type: integer
+        accumulated_human:
+          type: string
+          nullable: true
+        has_active_timers:
+          type: boolean
+
+    TaskCollectionMeta:
+      type: object
+      properties:
+        current_page: { type: integer }
+        per_page: { type: integer }
+        total: { type: integer }
+        last_page: { type: integer }
+
+    TaskCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        meta:
+          $ref: '#/components/schemas/TaskCollectionMeta'
+
+    Timer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        stopped_at:
+          type: string
+          format: date-time
+          nullable: true
+        paused_at:
+          type: string
+          format: date-time
+          nullable: true
+        active_since:
+          type: string
+          format: date-time
+          nullable: true
+        accumulated_seconds:
+          type: integer
+        accumulated_human:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        is_paused:
+          type: boolean
+        paused_total_seconds:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TimerCollectionMeta:
+      type: object
+      properties:
+        total: { type: integer }
+        count: { type: integer }
+        per_page: { type: integer }
+        current_page: { type: integer }
+        last_page: { type: integer }
+        next_page_url:
+          type: string
+          nullable: true
+        prev_page_url:
+          type: string
+          nullable: true
+
+    TimerCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Timer'
+        meta:
+          $ref: '#/components/schemas/TimerCollectionMeta'

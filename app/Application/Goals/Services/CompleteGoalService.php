@@ -3,6 +3,7 @@
 namespace App\Application\Goals\Services;
 
 use App\Application\Goals\DTO\CompleteGoalDTO;
+use App\Domain\Common\Contracts\Clock;
 use App\Domain\Common\Contracts\TransactionRunner;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Goals\ValueObjects\GoalSnapshot;
@@ -18,6 +19,7 @@ final class CompleteGoalService
         private TaskRepositoryInterface $taskRepository,
         private TimerRepositoryInterface $timerRepository,
         private TransactionRunner $transactionRunner,
+        private Clock $clock,
     ) {}
 
     /**
@@ -61,7 +63,7 @@ final class CompleteGoalService
 
             $snapshot = $goal->status === 'complete'
                 ? GoalSnapshot::fromModel($goal)
-                : $this->goalRepository->updateStatusSnapshot($goal->id, 'complete', now());
+                : $this->goalRepository->updateStatusSnapshot($goal->id, 'complete', $this->clock->now()->format('Y-m-d H:i:s'));
 
             return [
                 'goal_id' => $snapshot->id,

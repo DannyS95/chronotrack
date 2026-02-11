@@ -4,8 +4,6 @@ namespace App\Domain\Tasks\ValueObjects;
 
 use App\Domain\Common\Support\TimerDurations;
 use App\Infrastructure\Tasks\Eloquent\Models\Task as TaskModel;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
 
 final class TaskSnapshot
@@ -99,18 +97,11 @@ final class TaskSnapshot
     }
 
     /**
-     * @param Collection<int, Timer> $timers
+     * @param iterable<int, Timer> $timers
      */
-    private static function calculateTimerSeconds(Collection $timers): int
+    private static function calculateTimerSeconds(iterable $timers): int
     {
-        if ($timers->isEmpty()) {
-            return 0;
-        }
-
-        $now = Carbon::now();
-
-        # walk through timers and sum the total duration or calculate the running time from diff in seconds
-        return TimerDurations::sumDurationsFromCollection($timers, $now);
+        return TimerDurations::sumDurationsFromCollection($timers, new \DateTimeImmutable());
     }
 
     private static function calculateFallbackSeconds(TaskModel $task): int
@@ -123,7 +114,10 @@ final class TaskSnapshot
             return 0;
         }
 
-        $start = Carbon::parse($task->created_at);
+        $start = self::parseDateTime($task->created_at);
+        if ($start === null) {
+            return 0;
+        }
 
         $endCandidate = $task->last_activity_at
             ?? $task->updated_at
@@ -133,9 +127,12 @@ final class TaskSnapshot
             return 0;
         }
 
-        $end = Carbon::parse($endCandidate);
+        $end = self::parseDateTime($endCandidate);
+        if ($end === null) {
+            return 0;
+        }
 
-        return max(0, $end->diffInSeconds($start));
+        return max(0, $end->getTimestamp() - $start->getTimestamp());
     }
 
     /**
@@ -145,20 +142,54 @@ final class TaskSnapshot
      * explicit signal of recent work. Otherwise we fall back to the explicit
      * last_activity_at column, then updated_at, and finally creation time.
      */
-    private static function determineLastActivity(TaskModel $task, Collection $timers): ?string
+    private static function determineLastActivity(TaskModel $task, iterable $timers): ?string
     {
-        $lastTimer = $timers->filter(fn(Timer $timer) => $timer->stopped_at !== null)
-            ->sortByDesc(fn(Timer $timer) => $timer->stopped_at)
-            ->first();
+        $lastStoppedAt = null;
 
-        if ($lastTimer) {
-            return Carbon::parse($lastTimer->stopped_at)->format('Y-m-d H:i:s');
+        foreach ($timers as $timer) {
+            if ($timer->stopped_at === null) {
+                continue;
+            }
+
+            $stoppedAt = self::parseDateTime($timer->stopped_at);
+            if ($stoppedAt === null) {
+                continue;
+            }
+
+            if ($lastStoppedAt === null || $stoppedAt > $lastStoppedAt) {
+                $lastStoppedAt = $stoppedAt;
+            }
+        }
+
+        if ($lastStoppedAt !== null) {
+            return $lastStoppedAt->format('Y-m-d H:i:s');
         }
 
         $source = $task->last_activity_at
             ?? $task->updated_at
             ?? $task->created_at;
 
-        return $source ? Carbon::parse($source)->format('Y-m-d H:i:s') : null;
+        return self::parseDateTime($source)?->format('Y-m-d H:i:s');
+    }
+
+    private static function parseDateTime(mixed $value): ?\DateTimeImmutable
+    {
+        if ($value instanceof \DateTimeImmutable) {
+            return $value;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return \DateTimeImmutable::createFromInterface($value);
+        }
+
+        if (is_string($value) && $value !== '') {
+            try {
+                return new \DateTimeImmutable($value);
+            } catch (\Exception) {
+                return null;
+            }
+        }
+
+        return null;
     }
 }

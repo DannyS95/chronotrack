@@ -4,11 +4,11 @@ namespace App\Application\Tasks\Services;
 
 use App\Application\Tasks\DTO\UpdateTaskDTO;
 use App\Application\Tasks\ViewModels\TaskViewModel;
+use App\Domain\Common\Contracts\Clock;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Timers\Contracts\TimerRepositoryInterface;
 use App\Domain\Common\Contracts\TransactionRunner;
 use App\Domain\Tasks\Contracts\TaskRepositoryInterface;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 final class UpdateTaskService
@@ -18,6 +18,7 @@ final class UpdateTaskService
         private GoalRepositoryInterface $goalRepository,
         private TimerRepositoryInterface $timerRepository,
         private TransactionRunner $tx,
+        private Clock $clock,
     ) {}
 
     public function handle(UpdateTaskDTO $dto): TaskViewModel
@@ -50,7 +51,7 @@ final class UpdateTaskService
             $attributes = $dto->toArray();
 
             if ($shouldCompleteTask) {
-                $now = Carbon::now();
+                $now = $this->clock->now();
                 $attributes['last_activity_at'] = $attributes['last_activity_at'] ?? $now;
 
                 $hasTimers = $task->timers()->exists();
@@ -73,7 +74,7 @@ final class UpdateTaskService
                     );
 
                     if ($remaining === 0) {
-                        $this->goalRepository->updateStatusSnapshot($task->goal_id, 'complete', now());
+                        $this->goalRepository->updateStatusSnapshot($task->goal_id, 'complete', $this->clock->now()->format('Y-m-d H:i:s'));
                     }
                 }
 

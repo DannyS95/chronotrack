@@ -4,104 +4,144 @@ namespace App\Domain\Common\Support;
 
 use App\Domain\Tasks\ValueObjects\TaskSnapshot;
 use App\Infrastructure\Timers\Eloquent\Models\Timer;
-use Carbon\Carbon;
-use Carbon\CarbonInterval;
-use Illuminate\Support\Collection;
 
 final class TimerDurations
 {
     /**
-     * @param Collection<int, Timer> $timers
+     * @param iterable<int, Timer> $timers
      */
-    public static function sumDurationsFromCollection(Collection $timers, ?Carbon $now = null): int
+    public static function sumDurationsFromCollection(iterable $timers, ?\DateTimeImmutable $now = null): int
     {
-        if ($timers->isEmpty()) {
-            return 0;
-        }
+        $now ??= new \DateTimeImmutable();
+        $carry = 0;
 
-        $now ??= Carbon::now();
-
-        return (int) $timers->reduce(function (int $carry, Timer $timer) use ($now) {
-            $startedAt = $timer->started_at ? Carbon::parse($timer->started_at) : null;
+        foreach ($timers as $timer) {
+            $startedAt = self::parseDateTime($timer->started_at);
             if (! $startedAt) {
-                return $carry;
+                continue;
             }
 
             if ($timer->duration !== null) {
-                return $carry + max(0, (int) $timer->duration);
+                $carry += max(0, (int) $timer->duration);
+                continue;
             }
 
             $effectiveStop = $timer->paused_at
-                ? Carbon::parse($timer->paused_at)
-                : ($timer->stopped_at ? Carbon::parse($timer->stopped_at) : $now);
+                ? self::parseDateTime($timer->paused_at)
+                : (self::parseDateTime($timer->stopped_at) ?? $now);
 
-            $diff = $effectiveStop->greaterThan($startedAt)
-                ? $effectiveStop->diffInSeconds($startedAt)
-                : 0;
+            if ($effectiveStop === null) {
+                continue;
+            }
+
+            $diff = max(0, $effectiveStop->getTimestamp() - $startedAt->getTimestamp());
 
             $diff -= (int) $timer->paused_total;
 
-            return $carry + max(0, $diff);
-        }, 0);
+            $carry += max(0, $diff);
+        }
+
+        return $carry;
     }
 
     /**
-     * @param Collection<int, Timer> $timers
+     * @param iterable<int, Timer> $timers
      */
-    public static function determineActiveSinceFromCollection(Collection $timers): ?Carbon
+    public static function determineActiveSinceFromCollection(iterable $timers): ?\DateTimeImmutable
     {
-        if ($timers->isEmpty()) {
-            return null;
+        $firstTimer = null;
+
+        foreach ($timers as $timer) {
+            $startedAt = self::parseDateTime($timer->started_at);
+            if ($startedAt === null) {
+                continue;
+            }
+
+            if ($firstTimer === null || $startedAt < $firstTimer) {
+                $firstTimer = $startedAt;
+            }
         }
 
-        $firstTimer = $timers
-            ->map(fn(Timer $timer) => $timer->started_at ? Carbon::parse($timer->started_at) : null)
-            ->filter()
-            ->sort()
-            ->first();
-
-        return $firstTimer instanceof Carbon ? $firstTimer : null;
+        return $firstTimer;
     }
 
     /**
-     * @param Collection<int, TaskSnapshot> $snapshots
+     * @param iterable<int, TaskSnapshot> $snapshots
      */
-    public static function sumDurationsFromSnapshots(Collection $snapshots): int
+    public static function sumDurationsFromSnapshots(iterable $snapshots): int
     {
-        if ($snapshots->isEmpty()) {
-            return 0;
+        $total = 0;
+
+        foreach ($snapshots as $task) {
+            $total += max(0, $task->accumulatedSeconds);
         }
 
-        return (int) $snapshots->reduce(
-            fn(int $carry, TaskSnapshot $task) => $carry + max(0, $task->accumulatedSeconds),
-            0
-        );
+        return $total;
     }
 
     /**
-     * @param Collection<int, TaskSnapshot> $snapshots
+     * @param iterable<int, TaskSnapshot> $snapshots
      */
-    public static function determineActiveSinceFromSnapshots(Collection $snapshots): ?string
+    public static function determineActiveSinceFromSnapshots(iterable $snapshots): ?string
     {
-        if ($snapshots->isEmpty()) {
-            return null;
+        $earliest = null;
+
+        foreach ($snapshots as $task) {
+            $activeSince = self::parseDateTime($task->activeSince);
+            if ($activeSince === null) {
+                continue;
+            }
+
+            if ($earliest === null || $activeSince < $earliest) {
+                $earliest = $activeSince;
+            }
         }
 
-        $earliest = $snapshots
-            ->map(fn(TaskSnapshot $task) => $task->activeSince ? Carbon::parse($task->activeSince) : null)
-            ->filter()
-            ->sort()
-            ->first();
-
-        return $earliest instanceof Carbon
-            ? $earliest->format('Y-m-d H:i:s')
-            : null;
+        return $earliest?->format('Y-m-d H:i:s');
     }
 
     public static function humanizeSeconds(int $seconds): ?string
     {
-        return $seconds > 0
-            ? CarbonInterval::seconds($seconds)->cascade()->forHumans(short: true)
-            : null;
+        if ($seconds <= 0) {
+            return null;
+        }
+
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        $remainingSeconds = $seconds % 60;
+
+        $parts = [];
+        if ($hours > 0) {
+            $parts[] = $hours.'h';
+        }
+        if ($minutes > 0) {
+            $parts[] = $minutes.'m';
+        }
+        if ($remainingSeconds > 0 || $parts === []) {
+            $parts[] = $remainingSeconds.'s';
+        }
+
+        return implode(' ', $parts);
+    }
+
+    private static function parseDateTime(mixed $value): ?\DateTimeImmutable
+    {
+        if ($value instanceof \DateTimeImmutable) {
+            return $value;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return \DateTimeImmutable::createFromInterface($value);
+        }
+
+        if (is_string($value) && $value !== '') {
+            try {
+                return new \DateTimeImmutable($value);
+            } catch (\Exception) {
+                return null;
+            }
+        }
+
+        return null;
     }
 }

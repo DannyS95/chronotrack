@@ -14,6 +14,8 @@ Route::get('/', function () {
     ]);
 });
 
+Route::view('/api/docs', 'api-docs')->name('api.docs');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

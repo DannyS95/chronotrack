@@ -43,4 +43,17 @@ final class Workspace extends BaseModel
     {
         return $this->hasMany(Goal::class, 'project_id');
     }
+
+    public static function filters(): array
+    {
+        return [
+            'name' => 'like',
+            'id' => 'equals',
+            'user_id' => 'equals',
+            'description' => 'like',
+            'deadline' => 'date',
+            'from' => 'after.created_at',
+            'to' => 'before.created_at',
+        ];
+    }
 }

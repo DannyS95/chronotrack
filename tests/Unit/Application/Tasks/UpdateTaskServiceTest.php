@@ -4,6 +4,7 @@ namespace Tests\Unit\Application\Tasks;
 
 use App\Application\Tasks\DTO\UpdateTaskDTO;
 use App\Application\Tasks\Services\UpdateTaskService;
+use App\Domain\Common\Contracts\Clock;
 use App\Domain\Common\Contracts\TransactionRunner;
 use App\Domain\Goals\Contracts\GoalRepositoryInterface;
 use App\Domain\Goals\ValueObjects\GoalSnapshot;
@@ -77,6 +78,7 @@ final class UpdateTaskServiceTest extends TestCase
             $goalRepository,
             $timerRepository,
             $transactionRunner,
+            $this->clock(),
         );
 
         $result = $service->handle($dto);
@@ -126,6 +128,7 @@ final class UpdateTaskServiceTest extends TestCase
             $goalRepository,
             $timerRepository,
             $transactionRunner,
+            $this->clock(),
         );
 
         $result = $service->handle($dto);
@@ -196,6 +199,7 @@ final class UpdateTaskServiceTest extends TestCase
             $goalRepository,
             $timerRepository,
             $transactionRunner,
+            $this->clock(),
         );
 
         $result = $service->handle($dto);
@@ -237,5 +241,15 @@ final class UpdateTaskServiceTest extends TestCase
             description: null,
             completedAt: null,
         );
+    }
+
+    private function clock(): Clock
+    {
+        return new class implements Clock {
+            public function now(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('2026-02-09 12:00:00');
+            }
+        };
     }
 }
